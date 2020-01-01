@@ -1,0 +1,30 @@
+1. Basic information
+Student ID : 40425848, 
+Student Name : Qiancheng Wu
+OS (bit) : macOS Mojave 10.14.6 64 bit, 
+gcc version : 4.2.1, 
+Student ID: 90607203
+Student Name: Kun Han
+OS(bit): Ubuntu 18.04 LTS
+gcc version : gcc-5.5.0
+
+
+2. Internal Record Format
+- Show your record format design and describe how your design satisfies O(1) field access. If not, just mention that you haven't implemented this feature.
+- We use inline record format as stated in Note2. First we scan the data to get the record length and the offset to store the varChar field. After we get these two numbers, we convert the input data to record with inline format. The above two steps are implemented by iterating the field of input data with special data format. In our format mechanism, we avoid storing null field and use char16_t variable to store length and offset which helps us save space. 
+
+
+3. Page Format
+- Show your page format design
+
+Our page format design is basically based on Professor Chen Li's lecture2 slides #10. So, we have two defined struct which are PageDirectory and SlotDirectory. They are all be written to the end of the page which means the PageDirectory's pointer location is at PAGE_SIZE-sizeof(PageDirectory). In PageDirectory, we store two members which are numberofslot and freespace. They are used to get the number of slots currently in this page and how many freespace left for this page. For SlotDirectory, we have two members which are offset and length. This is written to the page for each record and it stores the offset to write a record and the length of the record. As you can see, we put the PageDirectory and SlotDirectory at the end of the page and from the beginning of the page to the Directory area are freespace. Hence, we insert records from the beginning of the page and assign a slot to it. And adding next record's location equals to previousSlot.offset + previousSlot.length. 
+
+
+4. Implementation Detail
+- Other implementation details goes here.
+
+To find an available page, we implement a function to iterate through all pages in the file to find enough freespace to insert the record. To improve efficiency and save running time, we decrease the I/O time and iterate through all pages from the end page of the file. 
+
+5. Other (optional)
+- Freely use this section to tell us about things that are related to the project 1, but not related to the other sections (optional)
+

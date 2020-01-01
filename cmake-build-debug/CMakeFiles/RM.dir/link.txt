@@ -1,0 +1,2 @@
+C:\Apps\mingw64\bin\ar.exe qc libRM.a  CMakeFiles/RM.dir/rm/rm.cc.obj
+C:\Apps\mingw64\bin\ranlib.exe libRM.a

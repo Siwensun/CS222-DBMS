@@ -1,0 +1,2 @@
+C:\Apps\mingw64\bin\ar.exe qc libPFM.a  CMakeFiles/PFM.dir/rbf/pfm.cc.obj
+C:\Apps\mingw64\bin\ranlib.exe libPFM.a

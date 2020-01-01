@@ -1,0 +1,63 @@
+1. Basic information
+Team number (e.g., 01) : 34
+#1 Student ID : 40425848
+#1 Student Name : Qiancheng Wu
+#2 Student ID : 90607203
+#2 Student Name : Kun Han
+OS (bit) : macOS Mojave(64), Ubuntu 16.04(64)
+gcc version : clang-1100.0.33.12 gcc 4.2.1, 7.4.0
+
+
+2. Meta-data page in an index file
+- Show your meta-data page of an index design if you have any.
+
+    In meta-data page, it contains three counters: readPageCount, writePageCount, appendPageCount.
+    Also, we use the page with page num 0 to store the root page pointer which points to the root page.
+
+3. Index Entry Format
+- Show your index entry design (structure). 
+    For INT and REAL: use 4 bytes; for For VARCHAR: use 4 bytes for the length followed by the characters.
+    In the leaf node, rid follows the key value; for intermediate and root node, pointer follows the key value, and # of pointer is greater than # of key by 1.
+
+4. Page Format
+- Show your internal-page (non-leaf node) design.
+    typedef struct
+    {
+        int flag;
+        int freeSpace;
+        int numOfRecords;
+    } imPageDirectory;
+
+    we store a imPageDirectory variable at the head of each internal page, followed by keys and pointers.
+
+- Show your leaf-page (leaf node) design.
+    typedef struct
+    {
+        int flag;
+        int freeSpace;
+        int numOfRecords;
+        int nextNode; // pageNum, Linklist
+    } leafPageDirectory;
+
+    we store a leafPageDirectory variable at the head of each leaf page, followed by keys and rids.
+
+    To avoid the align issues, we just use int(4B) in our struct design.
+
+5. Implementation Detail
+- Have you added your own source file (.cc or .h)? No
+
+- Have you implemented non-lazy deletion? Choose Yes or No: No
+
+- Have you implemented duplicated key handling that can span multiple pages? Choose Yes or No: No
+  If yes, please explain briefly how you have implemented this feature.
+
+- Other implementation details:
+
+
+6. Other (optional)
+- Freely use this section to tell us about things that are related to the project 3, but not related to the other sections (optional)
+
+To handle the deletion in scan, we set set two class attributes: preOffset and preRid.
+Each time before we get the next entry, we first check the rid that preOffset points to equal to the rid that stored in preRid or not.
+If the two rids are equal, no deletion happens, otherwise, there is a deletion happens after the getNextEntry.
+Then we set the curOffset to preOffset and decrease the recordId by 1.

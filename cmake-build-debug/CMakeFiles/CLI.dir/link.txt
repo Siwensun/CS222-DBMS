@@ -1,0 +1,2 @@
+C:\Apps\mingw64\bin\ar.exe qc libCLI.a  CMakeFiles/CLI.dir/cli/cli.cc.obj
+C:\Apps\mingw64\bin\ranlib.exe libCLI.a

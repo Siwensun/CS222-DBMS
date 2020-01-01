@@ -1,0 +1,49 @@
+1. Basic information
+Team number (e.g., 01):34
+#1 Student ID: 40425848
+#1 Student Name: Qiancheng Wu
+#2 Student ID: 90607203
+#2 Student Name: Kun Han
+OS (bit): macOS Mojave (64 bit), Ubuntu 16.04 (64 bit)
+gcc version: clang version 11.0.0 with gcc 4.2.1, 5.4.0
+
+
+2. Meta-data
+- Show your meta-data design (Tables and Columns table) and information about each column.
+Tables (table-id:int, table-name:varchar(50), file-name:varchar(50), flag:int)
+Columns(table-id:int, column-name:varchar(50), column-type:int, column-length:int, column-position:int)
+
+3. Internal Record Format
+- Show your record format design and describe how your design satisfies O(1) field access. If not, just mention that your team hasn't implemented this feature.
+Format(flag(1), fieldLength(2), nullIndicator, Int/Float/VarChar).
+As shown in the lecture, if the value is Int or Float type, we in-place store the value, if the value is VarChar type, see the explanation below.
+
+We access the field by comparing the attribute name and the item of descriptor, if the attributeName == item.name, then we access the field.
+
+- Describe how you store a VarChar field.
+We use 2 char16_t variable to store the value: offset and length. Offset points the actual data of VarChar field inside the record and the length value store the value the VarChar length.
+
+- Describe how you deal with an update and delete.
+As the professor discussed in the lecture, we have two formats of records. One is record format which has been described above, the other is a tombstone. The tombstone is used for when we update a record and new record length can not be placed on this page so we need a pointer to point to another page where this record really exists. Basically, this tombstone length is 9 because of flag 1 byte and RID 8 bytes. When we update a record, we first check whether it is a record or tombstone, if it is a record, we update it. If it is not, we continue to search until we find the real record. When we delete a record, it's basically the same as above, we first set the length to zero and free the space. Then, we shift records that are behind it. What's more, we delete all the tombstones and until we find a record and finally delete it.
+
+
+4. Page Format
+- Show your page format design.
+Each page, there is a PageDirectory and SlotDirectory at the end of each page. When we insert the record, we first check whether there is a unused slot, if there is, we reuse this slot, otherwise, we create a new slot. Then we write the record into the page, update the freespace and numofslot information of PageDirectory.
+
+- Describe how you deal with an update and delete.
+Just like stated above, when we update a record, if its new length is greater than this page's freespace, we just find a new page to insert it and mark the new page's information in the tombstone. Besides, if the old length is not enough, we always delete the old record and shift. For the delete operation, it is basically illustrated in the above section. The point is we could continue to search between pages to find where the record lives and delete them all including tombstones and real record. The slots within each page will never be deleted and we just set its length to 0. Besides, the slotNum will also not be changed. 
+
+5. File Format
+- Show your file format design
+Hidden page store the counter values, and other page visible for users store the actual records.
+
+6. Implementation Detail
+- Other implementation details goes here.
+Inside the RBFM_ScanIterator, we use curRid to store the current slot number and page number in order to reserve the previous process. And use curNumOfSlotsInPage to condition whether need to scan next page.
+
+To make sure the shift operation, we implement a shift function which stores a map to store each record's <offset, #slot>. And whenever we do the delete, we would call this function to shift all the records behind this deleted record to compact the page's freespace.
+
+7. Other (optional)
+- Freely use this section to tell us about things that are related to the project 2, but not related to the other sections (optional)
+We use Valgrind to check the memory usage and make sure there is no heap leakage. Besides, there is another issue blocking us for a long time. We test project2 well on our local machine, however, there are still some issues on openlab which is hard to detect using Valgrind because it gives no error when we use Valgrind to run. Hence, we use some prompt from Valgrind and GDB to find some invalid operations which may lead to memory issues.

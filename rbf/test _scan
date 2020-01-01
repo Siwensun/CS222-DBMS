@@ -1,0 +1,27 @@
+    cout << "Start to test RBFM_ScanIterator" << endl;
+    RBFM_ScanIterator rs;
+    std::vector<std::string> attributeNames;
+
+    attributeNames.push_back("Char0");
+    attributeNames.push_back("Int0");
+    attributeNames.push_back("Char1");
+    attributeNames.push_back("Int1");
+    attributeNames.push_back("Char2");
+    attributeNames.push_back("Int2");
+
+    RID rid1;
+
+    float x = 1;
+    void *value = malloc(20);
+    std::string str = "ccc";
+    int length = 3;
+    memcpy(value, &length, 4);
+    memcpy((char *)value+4, str.c_str(), length);
+
+
+    rbfm.scan(fileHandle, recordDescriptor, "Real0", LE_OP, &x, attributeNames, rs);
+    while(rs.getNextRecord(rid1, record) != RBFM_EOF){
+
+    }
+
+    cout << "Finish test RBFM_ScanIterator" << endl;
