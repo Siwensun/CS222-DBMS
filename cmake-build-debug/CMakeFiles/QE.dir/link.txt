@@ -1,2 +1,0 @@
-C:\Apps\mingw64\bin\ar.exe qc libQE.a  CMakeFiles/QE.dir/qe/qe.cc.obj
-C:\Apps\mingw64\bin\ranlib.exe libQE.a

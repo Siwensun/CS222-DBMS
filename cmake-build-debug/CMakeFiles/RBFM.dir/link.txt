@@ -1,2 +1,0 @@
-C:\Apps\mingw64\bin\ar.exe qc libRBFM.a  CMakeFiles/RBFM.dir/rbf/rbfm.cc.obj
-C:\Apps\mingw64\bin\ranlib.exe libRBFM.a

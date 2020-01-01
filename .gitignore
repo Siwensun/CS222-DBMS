@@ -36,3 +36,8 @@ tbl_*
 Tables
 Columns
 *_file
+
+# Cmake
+*.cmake
+*.make
+cmake-build-debug

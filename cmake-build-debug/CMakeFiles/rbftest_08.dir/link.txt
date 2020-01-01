@@ -1,3 +1,0 @@
-"C:\Program Files\JetBrains\CLion 2019.2.4\bin\cmake\win\bin\cmake.exe" -E remove -f CMakeFiles\rbftest_08.dir/objects.a
-C:\Apps\mingw64\bin\ar.exe cr CMakeFiles\rbftest_08.dir/objects.a @CMakeFiles\rbftest_08.dir\objects1.rsp
-C:\Apps\mingw64\bin\g++.exe  -fsanitize=address -O1 -g  -fno-omit-frame-pointer -g   -Wl,--whole-archive CMakeFiles\rbftest_08.dir/objects.a -Wl,--no-whole-archive  -o rbftest_08.exe -Wl,--out-implib,librbftest_08.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\rbftest_08.dir\linklibs.rsp

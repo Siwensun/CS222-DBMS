@@ -1,2 +1,0 @@
-C:\Apps\mingw64\bin\ar.exe qc libIX.a  CMakeFiles/IX.dir/ix/ix.cc.obj
-C:\Apps\mingw64\bin\ranlib.exe libIX.a
