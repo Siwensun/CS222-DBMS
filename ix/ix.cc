@@ -39,14 +39,14 @@ RC IndexManager::insertEntry(IXFileHandle &ixFileHandle, const Attribute &attrib
 
         int requiredLength = getRequiredLength(attribute, key, sizeof(rid));
         if(requiredLength == -1){
-            std::cout << "[Error] insertEntry -> fail to get the length of key." << std::endl;
+            // std::cout << "[Error] insertEntry -> fail to get the length of key." << std::endl;
             return -1;
         }
         
         void *page = malloc(PAGE_SIZE);
         rc = ixFileHandle.getFileHandle().readPage(0, page);
         if(rc != 0){
-            std::cout << "[Error] insertEntry -> fail to get the read the root-leaf page." << std::endl;
+            // std::cout << "[Error] insertEntry -> fail to get the read the root-leaf page." << std::endl;
             return -1;
         }
 
@@ -57,7 +57,7 @@ RC IndexManager::insertEntry(IXFileHandle &ixFileHandle, const Attribute &attrib
             // std::cout << "Insert into root-leaf page." << std::endl;
             rc = insertEntrytoNodeWithoutSplitting(ixFileHandle, ROOT_PAGE, LEAF_FLAG, page, attribute, key, &rid, sizeof(rid));
             if(rc != 0 ){
-                std::cout << "[Error] insertEntry -> fail to insertEntrytoNodeWithoutSplitting." << std::endl;
+                // std::cout << "[Error] insertEntry -> fail to insertEntrytoNodeWithoutSplitting." << std::endl;
                 return -1;
             }
         }
@@ -65,7 +65,7 @@ RC IndexManager::insertEntry(IXFileHandle &ixFileHandle, const Attribute &attrib
             // std::cout << "split the root leaf node and insert." << std::endl;
             rc = splitRootLeafPage(ixFileHandle, attribute, key, rid);
             if(rc != 0 ){
-                std::cout << "[Error] insertEntry -> fail to splitRootLeafPage." << std::endl;
+                // std::cout << "[Error] insertEntry -> fail to splitRootLeafPage." << std::endl;
                 return -1;
             }
         }
@@ -100,7 +100,7 @@ RC IndexManager::insertEntry(IXFileHandle &ixFileHandle, const Attribute &attrib
         bool splitFlag = true;
         rc = insertion(ixFileHandle, attribute, rootPageNum, _key, rid, splitKey, splitData, splitFlag);
         if(rc != 0){
-            std::cout << "[Error]: IndexManager::insertEntry -> fail to insert" << std::endl;
+            // std::cout << "[Error]: IndexManager::insertEntry -> fail to insert" << std::endl;
             return -1;
         }
 
@@ -227,13 +227,13 @@ RC IndexManager::insertion(IXFileHandle &ixFileHandle, const Attribute &attribut
             }
         }
         else {
-            std::cout << "[Error] wrong pageFlag curNode in insertion()." << std::endl;
+            // std::cout << "[Error] wrong pageFlag curNode in insertion()." << std::endl;
             free(page);
             return -1;
         }
     }
     else {
-        std::cout << "[Error] Can't read the curNode in insertion()." << std::endl;
+        // std::cout << "[Error] Can't read the curNode in insertion()." << std::endl;
         free(page);
         return -1;
     }
@@ -251,7 +251,7 @@ RC IndexManager::searchEntry(IXFileHandle &ixFileHandle, int &pageNum, int &offs
 //    std::cout << "We are in searchEntry(). " << std::endl;
 
     if(numOfPages == 0){
-        std::cout << "[Error]: search inside a empty B+tree." << std::endl;
+        // std::cout << "[Error]: search inside a empty B+tree." << std::endl;
         return -1;
     }
     else if(numOfPages == 1){
@@ -267,7 +267,7 @@ RC IndexManager::searchEntry(IXFileHandle &ixFileHandle, int &pageNum, int &offs
         void *rootPtr = malloc(PAGE_SIZE);
 
         if(ixFileHandle.getFileHandle().readPage(0, rootPtr) != 0){
-            std::cout << "searchEntry():  Can't read the page. " << std::endl;
+            // std::cout << "searchEntry():  Can't read the page. " << std::endl;
             return -1;
         }
 
@@ -286,7 +286,7 @@ RC IndexManager::searchEntry(IXFileHandle &ixFileHandle, int &pageNum, int &offs
         free(rootPtr);
         
         if(rc != 0){
-            std::cout << "[Error]: searchEntry -> can't find a <key, data>." << std::endl;
+            // std::cout << "[Error]: searchEntry -> can't find a <key, data>." << std::endl;
             return -1;
         }
     }
@@ -377,7 +377,7 @@ RC IndexManager::deleteEntry(IXFileHandle &ixFileHandle, const Attribute &attrib
                     memcpy(page, &directory, LEAF_DIR_SIZE);
                     ixFileHandle.getFileHandle().writePage(pageNum, page);
     
-                    std::cout << "deleteEntry -> Delete " << recordId << "'th entry inside " << pageNum << std::endl;
+                    // std::cout << "deleteEntry -> Delete " << recordId << "'th entry inside " << pageNum << std::endl;
                     free(tempData);
                     free(data);
                     free(page);
@@ -429,7 +429,7 @@ RC IndexManager::scan(IXFileHandle &ixFileHandle,
                                            highKeyInclusive, pageNum, offset, recordId);
     
     if(rc != 0){
-        std::cout << "[Error]: scan -> initializeScanIterator" << std::endl;
+        // std::cout << "[Error]: scan -> initializeScanIterator" << std::endl;
         return -1;
     }
     
@@ -441,7 +441,7 @@ void IndexManager::printBtree(IXFileHandle &ixFileHandle, const Attribute &attri
 
     int numOfPages = ixFileHandle.getFileHandle().getNumberOfPages();
     if(numOfPages == 0){
-        std::cerr << "Empty B+ tree" << std::endl;
+        // std::cerr << "Empty B+ tree" << std::endl;
         return;
     }
     else if(numOfPages == 1){
@@ -483,7 +483,7 @@ int IndexManager::getRequiredLength(const Attribute &attribute, const void *key,
             break;
         }
         default:{
-            std::cout << "[Error] wrong attribute type." << std::endl;
+            // std::cout << "[Error] wrong attribute type." << std::endl;
             return -1;
         }
     }
@@ -522,7 +522,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
         offset = IM_DIR_SIZE + sizeof(unsigned);
     }
     else{
-        std::cout << "[Error]: insertInNode -> wrong flag" << std::endl;
+        // std::cout << "[Error]: insertInNode -> wrong flag" << std::endl;
         return -1;
     }
 
@@ -531,7 +531,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
         case TypeInt:{
             // this should not happen
             if(freeSpace < (4 + sizeOfData)){
-                std::cout << "[Error]: insertInsideLeafNode -> can't fit the new insert key." << std::endl;
+                // std::cout << "[Error]: insertInsideLeafNode -> can't fit the new insert key." << std::endl;
                 return -1;
             }
 
@@ -563,7 +563,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
         case TypeReal:{
             // this should not happen
             if(freeSpace < (4+sizeOfData)){
-                std::cout << "[Error]: insertInsideLeafNode -> can't fit the new insert key." << std::endl;
+                // std::cout << "[Error]: insertInsideLeafNode -> can't fit the new insert key." << std::endl;
                 return -1;
             }
 
@@ -603,7 +603,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
 
             // this should not happen
             if(freeSpace < (4+length+sizeOfData)){
-                std::cout << "[Error]: insertInsideLeafNode -> can't fit the new insert key." << std::endl;
+                // std::cout << "[Error]: insertInsideLeafNode -> can't fit the new insert key." << std::endl;
                 return -1;
             }
 
@@ -684,7 +684,7 @@ RC IndexManager::getSplitInNode(int pageFlag, void *page, const Attribute &attri
         freeSpace = directory.freeSpace;
     }
     else{
-        std::cout << "[Error]: getSplitInNode -> wrong flag." << std::endl;
+        // std::cout << "[Error]: getSplitInNode -> wrong flag." << std::endl;
         return -1;
     }
 
@@ -861,19 +861,19 @@ RC IndexManager::insertEntrytoNodeWithSplitting(IXFileHandle &ixFileHandle, int 
     
     rc = getSplitInNode(pageFlag, page, attribute, splitOffset, splitNumOfRecords, splitKey, sizeOfData);
     if(rc != 0){
-        std::cout << "[Error] insertEntrytoNodeWithSplitting -> getSplitInNode." << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithSplitting -> getSplitInNode." << std::endl;
         free(newPage);
         return -1;
     }
     rc = redistributeNode(ixFileHandle, pageFlag, page, newPage, splitOffset, splitNumOfRecords, attribute);
     if(rc != 0){
-        std::cout << "[Error] insertEntrytoNodeWithSplitting -> redistributeNode." << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithSplitting -> redistributeNode." << std::endl;
         free(newPage);
         return -1;
     }
     rc = compareAndInsertToNode(pageFlag, page, newPage, attribute, key, splitKey, data, sizeOfData);
     if(rc != 0){
-        std::cout << "[Error] insertEntrytoNodeWithSplitting -> compareAndInsertToNode." << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithSplitting -> compareAndInsertToNode." << std::endl;
         free(newPage);
         return -1;
     }
@@ -884,7 +884,7 @@ RC IndexManager::insertEntrytoNodeWithSplitting(IXFileHandle &ixFileHandle, int 
 //        std::cout << "new Page number -> " << newPageNum << std::endl;
     }
     else{
-        std::cout << "[Error] insertEntrytoNodeWithSplitting() append the new page" << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithSplitting() append the new page" << std::endl;
         free(newPage);
         return -1;
     }
@@ -903,7 +903,7 @@ RC IndexManager::insertEntrytoNodeWithSplitting(IXFileHandle &ixFileHandle, int 
         return 0;
     }
     else{
-        std::cout << "[Error] insertEntrytoNodeWithSplitting() write the old page" << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithSplitting() write the old page" << std::endl;
         free(newPage);
         return -1;
     }
@@ -917,12 +917,12 @@ RC IndexManager::insertEntrytoNodeWithoutSplitting(IXFileHandle &ixFileHandle, u
     RC rc;
     rc = insertEntryToNode(pageFlag, page, attribute, key, data, sizeOfData);
     if(rc != 0){
-        std::cout << "[Error] insertEntrytoNodeWithoutSplitting -> fail to insertEntryToNode" << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithoutSplitting -> fail to insertEntryToNode" << std::endl;
         return -1;
     }
     rc = ixFileHandle.getFileHandle().writePage(pageNum, page);
     if(rc != 0){
-        std::cout << "[Error] insertEntrytoNodeWithoutSplitting -> fail to write page" << std::endl;
+        // std::cout << "[Error] insertEntrytoNodeWithoutSplitting -> fail to write page" << std::endl;
         return -1;
     }
     return 0;
@@ -941,7 +941,7 @@ RC IndexManager::appendRootLeafPage(IXFileHandle &ixFileHandle, const Attribute 
 
     RC rc = insertEntryToNode(LEAF_FLAG, page, attribute, key, &rid, sizeof(rid));
     if(rc != 0){
-        std::cout << "[Error] appendRootLeafPage -> insertEntryToNode" << std::endl;
+        // std::cout << "[Error] appendRootLeafPage -> insertEntryToNode" << std::endl;
         return -1;
     }
     
@@ -981,13 +981,13 @@ RC IndexManager::splitRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &
     rc = insertEntrytoNodeWithSplitting(ixFileHandle, LEAF_FLAG, leftPageNum, rightageNum, leftPage, splitKey, attribute, key, &rid,
                                    sizeof(rid));
     if(rc != 0){
-        std::cout << "[Error] splitRootLeafPage -> insertEntrytoNodeWithSplitting." << std::endl;
+        // std::cout << "[Error] splitRootLeafPage -> insertEntrytoNodeWithSplitting." << std::endl;
         return -1;
     }
     // std::cout << "leftPageNum: " << leftPageNum << "; rightageNum: " << rightageNum << std::endl;
     rc = generateNewRootNode(ixFileHandle, leftPageNum, rightageNum, rootPage, attribute, splitKey);
     if(rc != 0){
-        std::cout << "[Error] splitRootLeafPage -> generateNewRootNode." << std::endl;
+        // std::cout << "[Error] splitRootLeafPage -> generateNewRootNode." << std::endl;
         return -1;
     }
     
@@ -1065,7 +1065,7 @@ RC IndexManager::generateNewRootNode(IXFileHandle &ixFileHandle, unsigned leftPa
     // std::cout << "insert into root node" << std::endl;
     RC rc = insertEntryToNode(ROOT_FLAG, rootPage, attribute, splitkey, &rightPageNum, sizeof(rightPageNum));
     if(rc != 0){
-        std::cout << "[Error] generateNewRootNode -> insertEntryToNode." << std::endl;
+        // std::cout << "[Error] generateNewRootNode -> insertEntryToNode." << std::endl;
         return -1;
     }
     // std::cout << "finish insert into root node" << std::endl;
@@ -1363,7 +1363,7 @@ RC IndexManager::printNormalBtree(IXFileHandle &ixFileHandle, int curNode, int l
         memcpy(&directory, page, IM_DIR_SIZE);
         numOfRecords = directory.numOfRecords;
     } else{
-        std::cout << "[Error]: printNormalBtree -> wrong pageFlag." << std::endl;
+        // std::cout << "[Error]: printNormalBtree -> wrong pageFlag." << std::endl;
         return -1;
     }
 
@@ -1510,7 +1510,7 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
 //    std::cout << "curRecordId: " << curRecordId << " " << "; curLeafPageDir.numOfRecords: " << curLeafPageDir.numOfRecords << std::endl;
     
     if(rc != 0){
-        std::cout << "[Error] -> getNextEntry -> checkDeleteToUpdateCurOffset" << std::endl;
+        // std::cout << "[Error] -> getNextEntry -> checkDeleteToUpdateCurOffset" << std::endl;
         return -1;
     }
 
@@ -1636,7 +1636,7 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
         default:
             break;
     }
-    std::cout << "[Error] getNextEntry" << std::endl;
+    // std::cout << "[Error] getNextEntry" << std::endl;
     return -1;
 }
 
@@ -1666,7 +1666,7 @@ RC IX_ScanIterator::checkDeleteToUpdateCurOffset(void *page){
                 break;
             }
             default:{
-                std::cout << "[Error] -> checkDeleteToUpdateCurOffset -> attribute.type " << std::endl;
+                // std::cout << "[Error] -> checkDeleteToUpdateCurOffset -> attribute.type " << std::endl;
                 return -1;
             }
         }
@@ -1675,14 +1675,14 @@ RC IX_ScanIterator::checkDeleteToUpdateCurOffset(void *page){
             return 0;
         }
         else{
-            std::cout << "checkDeleteToUpdateCurOffset -> delete happens." << std::endl;
+            // std::cout << "checkDeleteToUpdateCurOffset -> delete happens." << std::endl;
             curOffset = preOffset;
             curRecordId -= 1;
             return 0;
         }
         //pass
     } else{
-        std::cout << "[Error] checkDeleteToUpdateCurOffset -> preOffset > curOffset" << std::endl;
+        // std::cout << "[Error] checkDeleteToUpdateCurOffset -> preOffset > curOffset" << std::endl;
         return -1;
     }
     
@@ -1720,7 +1720,7 @@ RC IXFileHandle::collectCounterValues(unsigned &readPageCount, unsigned &writePa
         return 0;
     }
     else{
-        std::cout << "[Error]: collectCounterValues -> fail to collectCounterValues." << std::endl;
+        // std::cout << "[Error]: collectCounterValues -> fail to collectCounterValues." << std::endl;
         return -1;
     }
 }

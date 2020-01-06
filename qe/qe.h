@@ -80,11 +80,11 @@ public:
     };
 
     // Start a new iterator given the new compOp and value
-    void setIterator(const std::string &conditionAttribute, const CompOp compOp,const void *value) {
+    void setIterator() {
         iter->close();
         delete iter;
         iter = new RM_ScanIterator();
-        rm.scan(tableName, conditionAttribute, compOp, value, attrNames, *iter);
+        rm.scan(tableName, "", NO_OP, NULL, attrNames, *iter);
     };
 
     RC getNextTuple(void *data) override {
@@ -225,10 +225,7 @@ public:
             //   i.e., memory block size (decided by the optimizer)
     );
 
-    ~BNLJoin() override{
-        free(lhsTupleData);
-        free(rhsTupleData);
-    }
+    ~BNLJoin() override= default;
 
     RC getNextTuple(void *data) override;
 
@@ -237,7 +234,6 @@ public:
 
     RC loadBlockBuffer(bool isFirst);
     RC cleanBlockBuffer();
-    int getTupleLength(void* tuple);
     bool isBNLJoinSatisfied();
 
 private:
@@ -249,9 +245,7 @@ private:
     bool leftTableisOver;
     bool isFirstTime;
     bool restart;
-    int lhsCountIndex;
     int lhsOffsetIndex;
-    int rhsCountIndex;
     int rhsOffsetIndex;
     void* lhsTupleData;
     void* rhsTupleData;
@@ -259,12 +253,12 @@ private:
     std::vector<Attribute> lhsAttributes;
     std::vector<Attribute> rhsAttributes;
     // hashmap: <value, tupleData>
-    std::unordered_map<int, void*> intBlockBuffer;
-    std::unordered_map<float, void*> floatBlockBuffer;
-    std::unordered_map<std::string, void*> varcharBlockBuffer;
-    std::unordered_map<int, void*>::iterator intCurrentPos;
-    std::unordered_map<float, void*>::iterator floatCurrentPos;
-    std::unordered_map<std::string, void*>::iterator varcharCurrentPos;
+    std::map<int, void*> intBlockBuffer;
+    std::map<float, void*> floatBlockBuffer;
+    std::map<std::string, void*> varcharBlockBuffer;
+    std::map<int, void*>::iterator intCurrentPos;
+    std::map<float, void*>::iterator floatCurrentPos;
+    std::map<std::string, void*>::iterator varcharCurrentPos;
     std::vector<void*> leftTable;
     std::vector<void*>::iterator it;
 };

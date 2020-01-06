@@ -730,11 +730,6 @@ int populateLargeLeftTable() {
     memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
 
     for (int i = 0; i < largeTupleCount; ++i) {
-        
-        if(i % 100 == 0){
-            std::cout << i << std::endl;
-        }
-        
         memset(buf, 0, bufSize);
 
         // Prepare the tuple data for insertion
@@ -771,10 +766,7 @@ int populateLargeLeftTable2() {
     auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
     memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
 
-    for (int i = 0; i < largeTupleCount; ++i){
-        if(i % 100 == 0){
-            std::cout << i << std::endl;
-        }
+    for (int i = 0; i < largeTupleCount; ++i) {
         memset(buf, 0, bufSize);
 
         // Prepare the tuple data for insertion
@@ -812,9 +804,6 @@ int addRecordsToLargeLeftTable2() {
     memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
 
     for (int i = largeTupleCount * 2 - 1; i > largeTupleCount; --i) {
-        if(i % 100 == 0){
-            std::cout << i << std::endl;
-        }
         memset(buf, 0, bufSize);
 
         // Prepare the tuple data for insertion
@@ -888,9 +877,6 @@ int populateLargeRightTable() {
     memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
 
     for (int i = 0; i < largeTupleCount; ++i) {
-        if(i % 100 == 0){
-            std::cout << i << std::endl;
-        }
         memset(buf, 0, bufSize);
 
         // Prepare the tuple data for insertion
@@ -928,9 +914,6 @@ int populateLargeRightTable2() {
     memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
 
     for (int i = 0; i < largeTupleCount; ++i) {
-        if(i % 100 == 0){
-            std::cout << i << std::endl;
-        }
         memset(buf, 0, bufSize);
 
         // Prepare the tuple data for insertion

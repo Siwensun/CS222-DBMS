@@ -59,14 +59,14 @@ RC RelationManager::createCatalog() {
     RC rc;
     
     if((_rbfm->createFile(TABLE_NAME) != 0) || _rbfm->createFile(COLUMN_NAME) != 0 || _rbfm->createFile(INDEX_NAME) != 0){
-        std::cout << "[Error]: createCatalog() -> system Catalogs already exist." << std::endl;
+        // std::cout << "[Error]: createCatalog() -> system Catalogs already exist." << std::endl;
         return -1;
     }
     
     _rbfm->openFile(TABLE_NAME, fileHandle);
     rc = insertRecordToTables(fileHandle, *_rbfm, 1, TABLE_NAME, TABLE_NAME);
     if(rc != 0){
-        std::cout << "[Error] createCatalog -> insertRecordToTables" << std::endl;
+        // std::cout << "[Error] createCatalog -> insertRecordToTables" << std::endl;
         return -1;
     }
     rc = insertRecordToTables(fileHandle, *_rbfm, 2, COLUMN_NAME, COLUMN_NAME);
@@ -108,7 +108,7 @@ RC RelationManager::createTable(const std::string &tableName, const std::vector<
     
     // 1. check table file name
     if(tableName == TABLE_NAME || tableName == COLUMN_NAME || tableName == INDEX_NAME){
-        std::cout << "[Error]: createTable -> can't create a Catalog file." << std::endl;
+        // std::cout << "[Error]: createTable -> can't create a Catalog file." << std::endl;
         return -1;
     }
     
@@ -153,7 +153,7 @@ RC RelationManager::deleteTable(const std::string &tableName) {
     RC rc;
     rc = deleteTableInsideIndexes(tableName);
     if(rc != 0){
-        std::cout << "[Error] deleteTable -> fail to deleteTableInsideIndexes" << std::endl;
+        // std::cout << "[Error] deleteTable -> fail to deleteTableInsideIndexes" << std::endl;
         return -1;
     }
     
@@ -162,7 +162,7 @@ RC RelationManager::deleteTable(const std::string &tableName) {
 //    std::cout << "********delete tuple in Tables********" << std::endl;
     rc = deleteTableInsideTables(tableName, tableId);
     if(rc != 0){
-        std::cout << "[Error] deleteTable -> fail to deleteTableInsideTables" << std::endl;
+        // std::cout << "[Error] deleteTable -> fail to deleteTableInsideTables" << std::endl;
         return -1;
     }
     // 2. deletes tuples in Columns
@@ -170,7 +170,7 @@ RC RelationManager::deleteTable(const std::string &tableName) {
 //    std::cout << "deleteTable -> tableId:  " << tableId << std::endl;
     rc = deleteTableInsideColumns(tableId);
     if(rc != 0){
-         std::cout << "[Error] deleteTable -> fail to deleteTableInsideColumns" << std::endl;
+         // std::cout << "[Error] deleteTable -> fail to deleteTableInsideColumns" << std::endl;
         return -1;
     }
     
@@ -206,7 +206,7 @@ RC RelationManager::insertTuple(const std::string &tableName, const void *data, 
     // 0. insert into heap file
     rc = _rbfm->openFile(tableName, fileHandle);
     if(rc != 0){
-        std::cout << "[Error] insertTuple -> fail to open file." << std::endl;
+        // std::cout << "[Error] insertTuple -> fail to open file." << std::endl;
         return -1;
     }
     
@@ -216,12 +216,12 @@ RC RelationManager::insertTuple(const std::string &tableName, const void *data, 
 //    _rbfm->printRecord(attrs, temp);
     if(rc != 0){
         rc = _rbfm->closeFile(fileHandle);
-        std::cout << "[Error] insertTuple -> fail to insert tuple." << std::endl;
+        // std::cout << "[Error] insertTuple -> fail to insert tuple." << std::endl;
         return -1;
     }
     rc = _rbfm->closeFile(fileHandle);
     if(rc != 0){
-        std::cout << "[Error] insertTuple -> fail to close file." << std::endl;
+        // std::cout << "[Error] insertTuple -> fail to close file." << std::endl;
         return -1;
     }
     
@@ -229,14 +229,14 @@ RC RelationManager::insertTuple(const std::string &tableName, const void *data, 
     std::map<std::pair<std::string, std::string>, RID> columnIndexMap;
     rc = generateCoumnIndexMapGivenTable(tableName, columnIndexMap);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
+        // std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
         return -1;
     }
     
     // this rid is from _rbfm.insertRecord
     rc = indexOperationWhenTupleChanged(tableName, rid, columnIndexMap, attrs, 1);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
+        // std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
         return  -1;
     }
     
@@ -261,13 +261,13 @@ RC RelationManager::deleteTuple(const std::string &tableName, const RID &rid) {
     std::map<std::pair<std::string, std::string>, RID> columnIndexMap;
     rc = generateCoumnIndexMapGivenTable(tableName, columnIndexMap);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
+        // std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
         return -1;
     }
     
     rc = indexOperationWhenTupleChanged(tableName, rid, columnIndexMap, attrs, 2);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
+        // std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
         return  -1;
     }
     
@@ -318,13 +318,13 @@ RC RelationManager::updateTuple(const std::string &tableName, const void *data, 
     std::map<std::pair<std::string, std::string>, RID> columnIndexMap;
     rc = generateCoumnIndexMapGivenTable(tableName, columnIndexMap);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
+        // std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
         return -1;
     }
     
     rc = indexOperationWhenTupleChanged(tableName, rid, columnIndexMap, attrs, 2);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
+        // std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
         return  -1;
     }
     
@@ -355,14 +355,14 @@ RC RelationManager::updateTuple(const std::string &tableName, const void *data, 
     // insert into index file
     rc = generateCoumnIndexMapGivenTable(tableName, columnIndexMap);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
+        // std::cout << "[Error]: insertTuple -> generateCoumnIndexMapGivenTable." << std::endl;
         return -1;
     }
     
     // this rid is from _rbfm.insertRecord
     rc = indexOperationWhenTupleChanged(tableName, rid, columnIndexMap, attrs, 1);
     if(rc != 0){
-        std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
+        // std::cout << "[Error]: insertTuple -> indexOperationWhenTupleChanged" << std::endl;
         return  -1;
     }
     return 0;
@@ -457,13 +457,13 @@ RC RelationManager::scan(const std::string &tableName,
     std::vector<Attribute> attrs;
     rc = getAttributes(tableName, attrs);
     if(rc != 0){
-        std::cout << "[Error]: RelationManager::scan -> getAttributes" << std::endl;
+        // std::cout << "[Error]: RelationManager::scan -> getAttributes" << std::endl;
         return -1;
     }
     _rbfm->openFile(tableName, rm_ScanIterator.getFileHandle());
     rc = _rbfm->scan(rm_ScanIterator.getFileHandle(), attrs, conditionAttribute, compOp, value, attributeNames, rm_ScanIterator.getRBFMScanIterator());
     if(rc != 0){
-        std::cout << "[Error]: RelationManager::scan -> _rbfm->scan" << std::endl;
+        // std::cout << "[Error]: RelationManager::scan -> _rbfm->scan" << std::endl;
         return -1;
     }
     return 0;
@@ -477,11 +477,11 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
     std::string indexFileName = tableName + "_" + attributeName;
     // 1. test the file existence.
     if(_im->openFile(indexFileName, ixFileHandle) == 0){
-        std::cout << "[Error]: createIndex -> Index file already exists." << std::endl;
+        // std::cout << "[Error]: createIndex -> Index file already exists." << std::endl;
         return -1;
     }
     else if(_im->createFile(indexFileName) != 0){
-        std::cout << "[Error]: createIndex -> fail to create index file." << std::endl;
+        // std::cout << "[Error]: createIndex -> fail to create index file." << std::endl;
         return -1;
     }
     
@@ -494,7 +494,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
     rc = insertRecordToIndexes(fileHandle, *_rbfm, tableName, attributeName, indexFileName);
     free(data);
     if(rc != 0){
-        std::cout << "[Error] createIndex -> fail to insertRecordToIndexes" << std::endl;
+        // std::cout << "[Error] createIndex -> fail to insertRecordToIndexes" << std::endl;
         return -1;
     }
     _rbfm->closeFile(fileHandle);
@@ -502,7 +502,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
     // Open for table file
     rc = _rbfm->openFile(tableName, fileHandle);
     if(rc != 0){
-        std::cout << "[Error]: createIndex -> fail to open table file" << std::endl;
+        // std::cout << "[Error]: createIndex -> fail to open table file" << std::endl;
         return -1;
     }
     if(fileHandle.getNumberOfPages() == 0){
@@ -523,7 +523,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
         }
     }
     if(attribute.name != attributeName){
-        std::cout << "[Error]: createIndex -> can't find the index." << std::endl;
+        // std::cout << "[Error]: createIndex -> can't find the index." << std::endl;
         return -1;
     }
     
@@ -537,7 +537,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
     _im->openFile(indexFileName, ixFileHandle);
     rc = _rbfm->scan(fileHandle, attrs, "", NO_OP, NULL, attrNames, rbfmScanIterator);
     if(rc != 0){
-        std::cout << "[Error]: createIndex -> fail to initiate scan iterator" << std::endl;
+        // std::cout << "[Error]: createIndex -> fail to initiate scan iterator" << std::endl;
         free(returnedData);
         return -1;
     }
@@ -548,7 +548,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
         char* nullIndicator = (char *)malloc(nullIndicatorSize);
         memcpy(nullIndicator, returnedData, nullIndicatorSize);
         if(nullIndicator[0] & (unsigned) 1 << (unsigned)7){
-            std::cout << "[Error]: createIndex -> index attribute is null" << std::endl;
+            // std::cout << "[Error]: createIndex -> index attribute is null" << std::endl;
             free(nullIndicator);
             return -1;
         }
@@ -556,7 +556,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
         memmove((char *)returnedData, (char *)returnedData+nullIndicatorSize, PAGE_SIZE-nullIndicatorSize);
         rc = _im->insertEntry(ixFileHandle, attribute, returnedData, rid);
         if(rc != 0){
-            std::cout << "[Error]: RelationManager::createIndex -> fail to insert into index file." << std::endl;
+            // std::cout << "[Error]: RelationManager::createIndex -> fail to insert into index file." << std::endl;
             return -1;
         }
     }
@@ -567,7 +567,7 @@ RC RelationManager::createIndex(const std::string &tableName, const std::string 
     // Open for table file and index file
     rc = _im->closeFile(ixFileHandle);
     if(rc != 0){
-        std::cout << "[Error]: createIndex -> fail to close index file" << std::endl;
+        // std::cout << "[Error]: createIndex -> fail to close index file" << std::endl;
         return -1;
     }
     return 0;
@@ -597,7 +597,7 @@ RC RelationManager::destroyIndex(const std::string &tableName, const std::string
     _rbfm->openFile(INDEX_NAME, fileHandle);
     rc = _rbfm->scan(fileHandle, _indexesDescriptor, "index-name", EQ_OP, value, attrNames, rbfmScanIterator);
     if(rc != 0){
-        std::cout << "[Error]: destroyIndex -> fail to initialize the scan iterator" << std::endl;
+        // std::cout << "[Error]: destroyIndex -> fail to initialize the scan iterator" << std::endl;
         return -1;
     }
     
@@ -638,7 +638,7 @@ RC RelationManager::indexScan(const std::string &tableName,
         }
     }
     if(rc != 0 || attribute.name != attributeName){
-        std::cout << "[Error] indexScan -> getAttributes" << std::endl;
+        // std::cout << "[Error] indexScan -> getAttributes" << std::endl;
         return -1;
     }
     
@@ -646,12 +646,12 @@ RC RelationManager::indexScan(const std::string &tableName,
     std::string indexFileName = tableName+"_"+attributeName;
     rc = _im->openFile(indexFileName, rm_IndexScanIterator.getIXFileHandle());
     if(rc != 0){
-        std::cout << "[Error]: indexScan -> fail to open index file" << std::endl;
+        // std::cout << "[Error]: indexScan -> fail to open index file" << std::endl;
         return -1;
     }
     rc = _im->scan(rm_IndexScanIterator.getIXFileHandle(), attribute, lowKey, highKey, lowKeyInclusive, highKeyInclusive, rm_IndexScanIterator.getIXScanIterator());
     if(rc != 0){
-        std::cout << "[Error]: indexScan -> fail to create IX_ScanItarator" << std::endl;
+        // std::cout << "[Error]: indexScan -> fail to create IX_ScanItarator" << std::endl;
         return -1;
     }
     return 0;
@@ -925,7 +925,7 @@ RC RelationManager::getTableIdForCustomTable(const std::string &tableName, int &
     // 1.3 initialize rbfmScanIterator
     rc = _rbfm->scan(fileHandle, _tablesDescriptor, "table-name", EQ_OP, table_name_value, attrNames, rbfmScanIterator);
     if(rc != 0){
-        std::cout << "[Error] getTableIdForCustomTable -> initiateRBFMScanIterator for Tabels" << std::endl;
+        // std::cout << "[Error] getTableIdForCustomTable -> initiateRBFMScanIterator for Tabels" << std::endl;
         _rbfm->closeFile(fileHandle);
         free(table_name_value);
         free(data);
@@ -935,7 +935,7 @@ RC RelationManager::getTableIdForCustomTable(const std::string &tableName, int &
     //1.4 get the record whose table-name is tableName
     rc = rbfmScanIterator.getNextRecord(rid, data);
     if(rc != 0){
-        std::cout << "[Error] getTableIdForCustomTable -> getNextRecord for Tabels" << std::endl;
+        // std::cout << "[Error] getTableIdForCustomTable -> getNextRecord for Tabels" << std::endl;
         _rbfm->closeFile(fileHandle);
         free(data);
         free(table_name_value);
@@ -1123,7 +1123,7 @@ RC RelationManager::deleteTableInsideColumns(int &tableId){
     // 2.3 initialize rbfmScanIterator
     rc = _rbfm->scan(fileHandle, _columnsDescriptor, "table-id", EQ_OP, &tableId, attrNames, rbfmScanIterator);
     if(rc != 0){
-         std::cout << "[Error] initiateRMScanIterator -> initiateRBFMScanIterator for Columns" << std::endl;
+         // std::cout << "[Error] initiateRMScanIterator -> initiateRBFMScanIterator for Columns" << std::endl;
         free(data);
         return -1;
     }
@@ -1140,7 +1140,7 @@ RC RelationManager::deleteTableInsideColumns(int &tableId){
     
     rc = rbfmScanIterator.close();
     if(rc != 0){
-         std::cout << "[Error] initiateRMScanIterator -> closeFile for Columns" << std::endl;
+         // std::cout << "[Error] initiateRMScanIterator -> closeFile for Columns" << std::endl;
         free(data);
         return -1;
     }
@@ -1155,7 +1155,7 @@ RC RelationManager::deleteTableInsideIndexes(const std::string tableName){
     std::map<std::pair<std::string, std::string>, RID> columnIndexMap;
     rc = generateCoumnIndexMapGivenTable(tableName, columnIndexMap);
     if(rc != 0){
-        std::cout << "[Error]: deleteTable -> fail to generateCoumnIndexMapGivenTable" << std::endl;
+        // std::cout << "[Error]: deleteTable -> fail to generateCoumnIndexMapGivenTable" << std::endl;
     }
     
     // destroy the index file
@@ -1193,7 +1193,7 @@ RC RelationManager::generateCoumnIndexMapGivenTable(const std::string &tableName
     rc = _rbfm->scan(fileHandle, _indexesDescriptor, "table-name", EQ_OP, value, indexAttrNames, rbfmScanIterator);
     
     if (rc != 0) {
-        std::cout << "[Error]: generateCoumnIndexMapGivenTable -> fail to initialize scan iterator." << std::endl;
+        // std::cout << "[Error]: generateCoumnIndexMapGivenTable -> fail to initialize scan iterator." << std::endl;
         free(value);
         return -1;
     }
@@ -1245,7 +1245,7 @@ RC RelationManager::indexOperationWhenTupleChanged(const std::string &tableName,
                 if(operationFlag == 1){
                     rc = _im->insertEntry(ixFileHandle, attribute, returnedKey, rid);
                     if(rc != 0){
-                        std::cout << "[Error]: RelationManager::indexOperationWhenTupleChanged -> fail to _im->insertEntry" << std::endl;
+                        // std::cout << "[Error]: RelationManager::indexOperationWhenTupleChanged -> fail to _im->insertEntry" << std::endl;
                     }
                 }
                 else if(operationFlag == 2){
@@ -1253,7 +1253,7 @@ RC RelationManager::indexOperationWhenTupleChanged(const std::string &tableName,
                 }
                 
                 if(rc != 0){
-                    std::cout << "[Error]: insertTuple -> insertEntry into index file" << std::endl;
+                    // std::cout << "[Error]: insertTuple -> insertEntry into index file" << std::endl;
                     return -1;
                 }
 //                _im->printBtree(ixFileHandle, attribute);

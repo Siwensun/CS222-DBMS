@@ -23,7 +23,7 @@ RC PagedFileManager::createFile(const std::string &fileName) {
         // if file exists, should fail
 
         // comment log message due to submission instructions
-        std::cout << "[Error] Create a File which already exists. " << std::endl;
+        // std::cout << "[Error] Create a File which already exists. " << std::endl;
         return -1;
     }
     else{
@@ -34,7 +34,7 @@ RC PagedFileManager::createFile(const std::string &fileName) {
             f.close();
             return 0;
         }else{
-            std::cout << "[Error] Create a File failed. " << std::endl;
+            // std::cout << "[Error] Create a File failed. " << std::endl;
             return -1;
         }
     }
@@ -50,7 +50,7 @@ RC PagedFileManager::destroyFile(const std::string &fileName) {
         // if file exists, delete it.
         f.close();
         if(remove(fileName.c_str()) != 0 ){
-            std::cout << "[Error] Destroy a file failed. " << std::endl;
+            // std::cout << "[Error] Destroy a file failed. " << std::endl;
             return -1;
         }
         else{
@@ -72,7 +72,7 @@ RC PagedFileManager::openFile(const std::string &fileName, FileHandle &fileHandl
     // doesn't allow if the fileHandle is already a handle for some open file when it passed to the openFile method.
     if(f.is_open())
     {
-        std::cout << "[Error] fileHandlle already open a file" << std::endl;
+        // std::cout << "[Error] fileHandlle already open a file" << std::endl;
         return -1;
     }
 
@@ -184,7 +184,7 @@ RC FileHandle::writePage(PageNum pageNum, const void *data)
 //    getNUmberOfPages() already consider the hidden page (minus 1 to get the value), so we just pageNUm+1 instead of +2
     if(pageNum+1 > getNumberOfPages())
     {
-        std::cout << "[Error] pageNum exceed total number of pages on writePage()" << std::endl;
+        // std::cout << "[Error] pageNum exceed total number of pages on writePage()" << std::endl;
         return -1;
     }
     else
@@ -200,7 +200,7 @@ RC FileHandle::writePage(PageNum pageNum, const void *data)
                 return 0;
             }
             else{
-                 std::cout << "[Error] writePage() write a new page failed." << std::endl;
+                 // std::cout << "[Error] writePage() write a new page failed." << std::endl;
                 return -1;
             }
         }
@@ -231,7 +231,7 @@ RC FileHandle::collectCounterValues(unsigned &readPageCount, unsigned &writePage
         return 0;
     }
     else{
-        std::cout << "[Error]: collectCounterValues -> fail to loadCounterValues." << std::endl;
+        // std::cout << "[Error]: collectCounterValues -> fail to loadCounterValues." << std::endl;
         return -1;
     }
 

@@ -38,7 +38,8 @@ void Filter::getAttributes(std::vector<Attribute> &attrs) const {
 bool Filter::isSatisfied(void *data) {
 
     if(condition.bRhsIsAttr){
-        std::cerr << "[Error] invalid rhs value. " << std::endl;
+        // std::cerr << "[Error] invalid rhs value. " << std::endl;
+        return -1;
     }
 
     std::vector<Attribute> lhsallAttributes;
@@ -59,28 +60,6 @@ bool Filter::isSatisfied(void *data) {
     free(selData);
     
     return rc;
-
-    // then, we read the right
-
-    // we comment this because rhs shouldn't be attr
-    /*
-    if(!condition.bRhsIsAttr){
-        // right hand side is value, we could compare them directly
-        return compLeftRightVal(lhsAttrData, condition.rhsValue.data, nullOffset);
-    }
-    else{
-        void* rhsAttrData = malloc(MAX_TUPLE_LEN);
-        RC rhs_rc = RecordBasedFileManager::instance().readAttributeFromRecord(attributes, condition.rhsAttr, rhsAttrData, data);
-
-        if(rhs_rc == -1){
-            free(lhsAttrData);
-            free(rhsAttrData);
-            return false;
-        }
-
-        return compLeftRightVal(lhsAttrData, rhsAttrData, nullOffset);
-    }
-     */
 }
 
 /*
@@ -111,8 +90,8 @@ Project::Project(Iterator *input, const std::vector<std::string> &attrNames) {
 RC Project::getNextTuple(void *data) {
 
     // first, we get the whole tuple.
-    void *tuple = malloc(PAGE_SIZE);
-    memset(tuple, 0, PAGE_SIZE);
+    void *tuple = malloc(MAX_TUPLE_LEN);
+    memset(tuple, 0, MAX_TUPLE_LEN);
     
     if(ite_input->getNextTuple(tuple) != 0)
     {
@@ -147,9 +126,7 @@ BNLJoin::BNLJoin(Iterator *leftIn, TableScan *rightIn, const Condition &conditio
     this->leftTableisOver = false;
     this->isFirstTime = true;
     this->restart = false;
-    this->lhsCountIndex = 0;
     this->lhsOffsetIndex = 0;
-    this->rhsCountIndex = 0;
     this->rhsOffsetIndex = 0;
 
     this->leftIn->getAttributes(lhsAttributes);
@@ -173,7 +150,7 @@ void BNLJoin::getAttributes(std::vector<Attribute> & attrs) const {
 RC BNLJoin::getNextTuple(void *data) {
     if(!condition.bRhsIsAttr){
         // not the join.
-        std::cerr << "[Error] Right Attribute is not the join situation. " << std::endl;
+        // std::cerr << "[Error] Right Attribute is not the join situation. " << std::endl;
         return -1;
     }
 
@@ -182,7 +159,10 @@ RC BNLJoin::getNextTuple(void *data) {
         isFirstTime = false;
 
         rhsTupleData = malloc(MAX_TUPLE_LEN);
-        rightIn->getNextTuple(rhsTupleData);
+        if(rightIn->getNextTuple(rhsTupleData) == QE_EOF){
+            // std::cerr << "No data in right table. " << std::endl;
+            return -1;
+        }
 
         rhsOffsetIndex = ceil((double(rhsAttributes.size())/CHAR_BIT));
         for(auto &attr : rhsAttributes){
@@ -199,12 +179,11 @@ RC BNLJoin::getNextTuple(void *data) {
             if(attr.name == condition.rhsAttr){
                 // matched
                 joinTargetType = attr.type;
-                std::cout << "[Warning] BNL Join target attribute is set: " << attr.type << std::endl;
+                // std::cout << "[Warning] BNL Join target attribute is set: " << attr.name << std::endl;
                 break;
             }
 
             rhsOffsetIndex += stepLen;
-            rhsCountIndex++;
         }
 
         loadBlockBuffer(true);
@@ -216,25 +195,32 @@ RC BNLJoin::getNextTuple(void *data) {
             // first, we need to check whether the hashmap is empty or full
             if(intCurrentPos == intBlockBuffer.end() && !leftTableisOver){
                 // we have reached the last element of hashmap and we should clean and reload.
-                cleanBlockBuffer();
                 loadBlockBuffer(false);
+                continue;
             }
 
             if(intCurrentPos == intBlockBuffer.end() && leftTableisOver){
                 // Finish the first round, we need to update both the left and right.
-                cleanBlockBuffer();
                 // TO DO: re-start scan of left Table
                 restart = true;
                 it = leftTable.begin();
+
                 loadBlockBuffer(false);
+
                 memset(rhsTupleData, 0, MAX_TUPLE_LEN);
                 if(rightIn->getNextTuple(rhsTupleData) == QE_EOF){
-                    // finish the join.
-                    std::cout << "Finish BNL join. " << std::endl;
-                    return -1;
-                    // rightIn->setIterator();
-                    // rightIn->getNextTuple(rhsTupleData);
+                    if(leftTableisOver){
+                        // finish the join.
+                        // std::cout << "Finish BNL join. " << std::endl;
+                        return -1;
+                    }
+                    else{
+                        rightIn->setIterator();
+                        rightIn->getNextTuple(rhsTupleData);
+                    }
                 }
+
+                continue;
             }
 
             intCurrentPos++;
@@ -243,13 +229,12 @@ RC BNLJoin::getNextTuple(void *data) {
             // first, we need to check whether the hashmap is empty or full
             if(floatCurrentPos == floatBlockBuffer.end() && !leftTableisOver){
                 // we have reached the last element of hashmap and we should clean and reload.
-                cleanBlockBuffer();
                 loadBlockBuffer(false);
+                continue;
             }
 
             if(floatCurrentPos == floatBlockBuffer.end() && leftTableisOver){
                 // Finish the first round, we need to update both the left and right.
-                cleanBlockBuffer();
                 // TO DO: re-start scan of left Table
                 restart = true;
                 it = leftTable.begin();
@@ -257,11 +242,13 @@ RC BNLJoin::getNextTuple(void *data) {
                 memset(rhsTupleData, 0, MAX_TUPLE_LEN);
                 if(rightIn->getNextTuple(rhsTupleData) == QE_EOF){
                     // finish the join.
-                    std::cout << "Finish BNL join. " << std::endl;
+                    // std::cout << "Finish BNL join. " << std::endl;
                     return -1;
                     // rightIn->setIterator();
                     // rightIn->getNextTuple(rhsTupleData);
                 }
+
+                continue;
             }
 
             floatCurrentPos++;
@@ -270,13 +257,12 @@ RC BNLJoin::getNextTuple(void *data) {
             // first, we need to check whether the hashmap is empty or full
             if(varcharCurrentPos == varcharBlockBuffer.end() && !leftTableisOver){
                 // we have reached the last element of hashmap and we should clean and reload.
-                cleanBlockBuffer();
                 loadBlockBuffer(false);
+                continue;
             }
 
             if(varcharCurrentPos == varcharBlockBuffer.end() && leftTableisOver){
                 // Finish the first round, we need to update both the left and right.
-                cleanBlockBuffer();
                 // TO DO: re-start scan of left Table
                 restart = true;
                 it = leftTable.begin();
@@ -284,11 +270,13 @@ RC BNLJoin::getNextTuple(void *data) {
                 memset(rhsTupleData, 0, MAX_TUPLE_LEN);
                 if(rightIn->getNextTuple(rhsTupleData) == QE_EOF){
                     // finish the join.
-                    std::cout << "Finish BNL join. " << std::endl;
+                    // std::cout << "Finish BNL join. " << std::endl;
                     return -1;
                     // rightIn->setIterator();
                     // rightIn->getNextTuple(rhsTupleData);
                 }
+
+                continue;
             }
 
             varcharCurrentPos++;
@@ -296,16 +284,18 @@ RC BNLJoin::getNextTuple(void *data) {
     }
 
     // current satisfy the join, we concatenate them and output.
-    memcpy(data, lhsTupleData, MAX_TUPLE_LEN);
-    memcpy((char*)data + MAX_TUPLE_LEN, rhsTupleData, MAX_TUPLE_LEN);
-    if(joinTargetType == TypeInt){
-       intCurrentPos++;
-    }
-    else if(joinTargetType == TypeReal){
+    std::vector<Attribute> allAttrs;
+    this->getAttributes(allAttrs);
+
+    if (joinTargetType == TypeInt) {
+        concatenateData(allAttrs, lhsAttributes, rhsAttributes, intCurrentPos->second, rhsTupleData, data);
+        intCurrentPos++;
+    } else if (joinTargetType == TypeReal) {
+        concatenateData(allAttrs, lhsAttributes, rhsAttributes, floatCurrentPos->second, rhsTupleData, data);
         floatCurrentPos++;
-    }
-    else{
+    } else {
         // varchar
+        concatenateData(allAttrs, lhsAttributes, rhsAttributes, varcharCurrentPos->second, rhsTupleData, data);
         varcharCurrentPos++;
     }
 
@@ -313,6 +303,10 @@ RC BNLJoin::getNextTuple(void *data) {
 }
 
 RC BNLJoin::loadBlockBuffer(bool isFirst) {
+
+    // clean first.
+    cleanBlockBuffer();
+
     // call the left.getNextTuple to load tuples into the map until the buffer is full.
     int totalTupleLen = 0;
 
@@ -320,7 +314,16 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
         // we need to calculate countIndex and offsetIndex
         lhsTupleData = malloc(MAX_TUPLE_LEN);
         memset(lhsTupleData, 0, MAX_TUPLE_LEN);
-        leftIn->getNextTuple(lhsTupleData);
+        if(leftIn->getNextTuple(lhsTupleData) == QE_EOF){
+            // the scan of left table is over
+            leftTableisOver = true;
+            free(lhsTupleData);
+            // std::cout << "[Error] No data in the left table. " << std::endl;
+            return -1;
+        }
+
+        // copy the tuple to our vector for later use.
+        leftTable.emplace_back(lhsTupleData);
 
         // Find the attribute's offset of this tuple
         lhsOffsetIndex = ceil((double(lhsAttributes.size())/CHAR_BIT));
@@ -338,15 +341,14 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
             if(attr.name == condition.lhsAttr){
                 // matched
                 if(attr.type != joinTargetType){
-                    std::cerr << "[Error] BNL Join with different join value. " << std::endl;
+                    // std::cerr << "[Error] BNL Join with different join value. " << std::endl;
                     return -1;
                 }
-                std::cout << "Set the BNL join lhs. " << std::endl;
+                // std::cout << "Set the BNL join lhs. " << std::endl;
                 break;
             }
 
             lhsOffsetIndex += stepLen;
-            lhsCountIndex++;
         }
 
         // get the joinValue and load this tuple.
@@ -370,10 +372,10 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
             varcharBlockBuffer.insert(std::pair<std::string, void*>(joinVal, lhsTupleData));
         }
 
-        totalTupleLen += getTupleLength(lhsTupleData);
+        totalTupleLen += getLengthOfData(lhsAttributes, lhsTupleData);
     }
 
-    while(totalTupleLen < numPageinBlock*PAGE_SIZE){
+    while(totalTupleLen <= numPageinBlock*PAGE_SIZE){
         // clear the tuple to getNext
         lhsTupleData = malloc(MAX_TUPLE_LEN);
         memset(lhsTupleData, 0, MAX_TUPLE_LEN);
@@ -382,8 +384,8 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
             if(leftIn->getNextTuple(lhsTupleData) == QE_EOF){
                 // the scan of left table is over
                 leftTableisOver = true;
-                free(lhsTupleData);
-                std::cout << "[Warning] Scan reaches the end of left table in BNLJoin. " << std::endl;
+                // free(lhsTupleData);
+                // std::cout << "[Warning] Scan reaches the end of left table in BNLJoin for the first round. " << std::endl;
                 break;
             }
 
@@ -392,17 +394,18 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
         }
         else{
             if(leftTable.empty()){
-                std::cerr << "Invalid leftTable vector. " << std::endl;
+                // std::cerr << "Invalid leftTable vector. " << std::endl;
                 return -1;
             }
 
             if(it == leftTable.end()){
                 leftTableisOver = true;
-                free(lhsTupleData);
-                std::cout << "[Warning] 2... Scan reaches the end of left table in BNLJoin. " << std::endl;
+                // free(lhsTupleData);
+                // std::cout << "[Warning] 2  ... Scan reaches the end of left table in BNLJoin. " << std::endl;
                 break;
             }
-            lhsTupleData = *it;
+
+            memcpy(lhsTupleData, *it, MAX_TUPLE_LEN);
             it++;
         }
 
@@ -427,7 +430,7 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
             varcharBlockBuffer.insert(std::pair<std::string, void*>(joinVal, lhsTupleData));
         }
 
-        totalTupleLen += getTupleLength(lhsTupleData);
+        totalTupleLen += getLengthOfData(lhsAttributes, lhsTupleData);
     }
 
     // initialize the currentPos ptr
@@ -443,6 +446,7 @@ RC BNLJoin::loadBlockBuffer(bool isFirst) {
     }
 
     // free(lhsTupleData);
+
     return 0;
 }
 
@@ -452,22 +456,12 @@ RC BNLJoin::cleanBlockBuffer() {
         if(intBlockBuffer.empty())
             return 0;
 
-        auto _ite = intBlockBuffer.begin();
-        while(_ite != intBlockBuffer.end()){
-            free(_ite->second);
-            _ite++;
-        }
         intBlockBuffer.clear();
     }
     else if(joinTargetType == TypeReal){
         if(floatBlockBuffer.empty())
             return 0;
 
-        auto _ite = floatBlockBuffer.begin();
-        while(_ite != floatBlockBuffer.end()){
-            free(_ite->second);
-            _ite++;
-        }
         floatBlockBuffer.clear();
     }
     else{
@@ -475,37 +469,10 @@ RC BNLJoin::cleanBlockBuffer() {
         if(varcharBlockBuffer.empty())
             return 0;
 
-        auto _ite = varcharBlockBuffer.begin();
-        while(_ite != varcharBlockBuffer.end()){
-            free(_ite->second);
-            _ite++;
-        }
         varcharBlockBuffer.clear();
     }
 
     return 0;
-}
-
-int BNLJoin::getTupleLength(void* tuple) {
-    // first nullindicator field
-    int tupleLen = ceil((double(lhsAttributes.size())/CHAR_BIT));
-
-    // iterate through the tuple to get the total length
-    for(auto & attr : lhsAttributes){
-        int stepLen = 0;
-        if(attr.type == TypeVarChar){
-            // we need to add the varchar length to the offset
-            int varCharLen = 0;
-            memcpy(&varCharLen, (char*)tuple + tupleLen, 4);
-            stepLen += varCharLen;
-        }
-
-        // For INT AND REAL
-        stepLen += 4;
-        tupleLen += stepLen;
-    }
-
-    return tupleLen;
 }
 
 bool BNLJoin::isBNLJoinSatisfied() {
@@ -622,7 +589,7 @@ RC INLJoin::getNextTuple(void* data) {
                 }
                 extractFromReturnedData(this->lhsAttributes, this->lhsSelAttrNames, this->lhsTupleData, this->lhsSelData);
                 if (((char *) this->lhsSelData)[0] & (unsigned) 1 << (unsigned) 7){
-                    std::cout << "Tuple from Left Hand is null" << std::endl;
+                    // std::cout << "Tuple from Left Hand is null" << std::endl;
                     continue;
                 }
                 else{
@@ -667,7 +634,7 @@ Aggregate::Aggregate(Iterator *input,          // Iterator of input R
     this->opDone = false;
     
     if(aggAttr.type != TypeInt && aggAttr.type != TypeReal){
-        std::cout << "[Error]: Aggregate -> aggregate only on INT or REAL value." <<std::endl;
+        // std::cout << "[Error]: Aggregate -> aggregate only on INT or REAL value." <<std::endl;
     }
 };
 
@@ -721,7 +688,7 @@ RC Aggregate::getNextTuple(void *data){
         finalResult = resultREAL;
     }
     else{
-        std::cout << "[Error]: getNextTuple -> aggregate only on INT or REAL value." <<std::endl;
+        // std::cout << "[Error]: getNextTuple -> aggregate only on INT or REAL value." <<std::endl;
         return -1;
     }
     
@@ -825,7 +792,7 @@ void Aggregate::getAttributes(std::vector<Attribute> &attrs) const {
             break;
         }
         default:{
-            std::cout << "[Error]: None-defined op." << std::endl;
+            // std::cout << "[Error]: None-defined op." << std::endl;
             return;
         }
     }
@@ -867,11 +834,11 @@ bool compLeftRightVal(AttrType attrType, Condition condition, const void *leftDa
                 return true;
             }
             default:
-                std::cerr << "[Error] wrong op !" << std::endl;
+                // std::cerr << "[Error] wrong op !" << std::endl;
                 break;
         }
         
-        std::cerr << "[Error] wrong condition.op. TypeInt " << std::endl;
+        // std::cerr << "[Error] wrong condition.op. TypeInt " << std::endl;
         return -1;
     }
     else if(attrType == TypeReal){
@@ -902,11 +869,11 @@ bool compLeftRightVal(AttrType attrType, Condition condition, const void *leftDa
                 return true;
             }
             default:
-                std::cerr << "[Error] wrong op !" << std::endl;
+                // std::cerr << "[Error] wrong op !" << std::endl;
                 break;
         }
         
-        std::cerr << "[Error] wrong condition.op. TypeReal" << std::endl;
+        // std::cerr << "[Error] wrong condition.op. TypeReal" << std::endl;
         return -1;
     }
     else if(attrType == TypeVarChar){
@@ -964,15 +931,15 @@ bool compLeftRightVal(AttrType attrType, Condition condition, const void *leftDa
                 return true;
             }
             default:
-                std::cerr << "[Error] wrong op !" << std::endl;
+                // std::cerr << "[Error] wrong op !" << std::endl;
                 break;
         }
         
-        std::cerr << "[Error] wrong condition.op. TypeVarChar " << std::endl;
+        // std::cerr << "[Error] wrong condition.op. TypeVarChar " << std::endl;
         return -1;
     }
     else{
-        std::cerr << "[Error] wrong attrType. " << std::endl;
+        // std::cerr << "[Error] wrong attrType. " << std::endl;
         return -1;
     }
 }
@@ -999,8 +966,8 @@ RC extractFromReturnedData(const std::vector<Attribute> &attrs, const std::vecto
     offsetData += nullIndicatorSize;
     
     // 4. iterate over attributes
-    int nullByteIndex, bitIndex, fieldIndex;
-    int varCharLen;
+    int nullByteIndex, bitIndex, fieldIndex = 0;
+    int varCharLen = 0;
     
     for(nullByteIndex = 0; nullByteIndex < nullIndicatorSize; nullByteIndex++)
     {
@@ -1100,7 +1067,7 @@ RC concatenateData(std::vector<Attribute> allAttributes, std::vector<Attribute> 
             if(fieldIndex < int(lhsAttributes.size())){
                 if(nullIndicatorLeft[(leftBitIndex+1)/CHAR_BIT] & (unsigned char) 1 << (unsigned) (7 - leftBitIndex%CHAR_BIT)){
                     nullIndicator[byteIndex] |= ((unsigned char) 1 << (unsigned) (7 - fieldIndex%CHAR_BIT));
-                    std::cout << "Left hand " << leftBitIndex << "'th attribute is null" <<std::endl;
+                    // std::cout << "Left hand " << leftBitIndex << "'th attribute is null" <<std::endl;
                 }
 //                else{
 //                    std::cout << "Left hand " << leftBitIndex << "'th attribute is not null" <<std::endl;
@@ -1110,7 +1077,7 @@ RC concatenateData(std::vector<Attribute> allAttributes, std::vector<Attribute> 
             else if(fieldIndex < int(lhsAttributes.size() + rhsAttributes.size())){
                 if(nullIndicatorRight[(rightBitIndex+1)/CHAR_BIT] & (unsigned char) 1 << (unsigned) (7 - rightBitIndex%CHAR_BIT)){
                     nullIndicator[byteIndex] |= ((unsigned char) 1 << (unsigned) (7 - fieldIndex%CHAR_BIT));
-                    std::cout << "Right hand " << rightBitIndex << "'th attribute is null" <<std::endl;
+                    // std::cout << "Right hand " << rightBitIndex << "'th attribute is null" <<std::endl;
                 }
 //                else{
 //                    std::cout << "Right hand " << rightBitIndex << "'th attribute is not null" <<std::endl;
@@ -1122,10 +1089,11 @@ RC concatenateData(std::vector<Attribute> allAttributes, std::vector<Attribute> 
             }
         }
     }
-    
+
     memcpy(data, nullIndicator, nullIndicatorSize);
     memcpy((char *)data+nullIndicatorSize, (char *)lhsTupleData+nullIndicatorSizeLeft, lhsTupleLen-nullIndicatorSizeLeft);
     memcpy((char *)data+nullIndicatorSize+lhsTupleLen-nullIndicatorSizeLeft, (char *)rhsTupleData+nullIndicatorSizeRight, rhsTupleLen-nullIndicatorSizeRight);
+
     free(nullIndicator);
     free(nullIndicatorLeft);
     free(nullIndicatorRight);
@@ -1169,7 +1137,7 @@ int getLengthOfData(const std::vector<Attribute> &attrs, const void *data){
                     offset += 4;    // fixed-length field, in-line record field
                     break;
                 default:
-                     std::cout << "[Error] None-specified data type." << std::endl;
+                     // std::cout << "[Error] None-specified data type." << std::endl;
                      break;
             }
         }
