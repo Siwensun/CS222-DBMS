@@ -18,10 +18,10 @@
     2: root-leaf/leaf
  */
 # define EMPTY_FLAG 0
-# define ROOT_PTR_FLAG 1
-# define ROOT_FLAG 2
-# define IM_FLAG 3
-# define LEAF_FLAG 4
+# define ROOT_PTR_FLAG 1    // root node stores pointer
+# define ROOT_FLAG 2        // root node
+# define IM_FLAG 3          //intermediate node
+# define LEAF_FLAG 4        // leaf node
 
 # define ROOT_PAGE 0
 
@@ -82,43 +82,7 @@ public:
 
     // Print the B+ tree in pre-order (in a JSON record format)
     void printBtree(IXFileHandle &ixFileHandle, const Attribute &attribute) const;
-
-    RC insertion(IXFileHandle &ixFileHandle, const Attribute &attribute, unsigned curNode, const void *key, const RID &rid, void *newChildKey, void *newChildData, bool &splitFlag);
-
-    RC getRequiredLength(const Attribute &attribute, const void *key, int sizeOfData);
-
-    RC insertEntryToNode(int pageFlag, void *page, const Attribute &attribute, const void *key, const void *data, int sizeOfData);
-
-    RC searchEntry(IXFileHandle &ixFileHandle, int &pageNum, int &offset, int &recordId, const Attribute &attribute, const void *key, bool inclusive);
-
-    RC getSplitInNode(int pageFlag, void *page, const Attribute &attribute, int &splitOffset, int &splitNumOfRecords, void *splitKey, int sizeOfData);
-
-    RC compareAndInsertToNode(int pageFlag, void *oldPage, void *newPage, const Attribute &attribute, const void *key, void *splitKey, const void *data, int sizeOfData);
-
-    RC redistributeNode(IXFileHandle &ixFileHandle, int pageFlag, void *oldPage, void *newPage, int splitOffset, int splitNumOfRecords, const Attribute &attribute);
-
-    // Above functions are helper function
-
-    RC insertEntrytoNodeWithSplitting(IXFileHandle &ixFileHandle, int pageFlag, unsigned pageNum, unsigned &newPageNum, void *page, void *splitKey, const Attribute &attribute, const void *key, const void *data, int sizeOfData);
-
-    RC insertEntrytoNodeWithoutSplitting(IXFileHandle &ixFileHandle, unsigned pageNum, int pageFlag, void *page, const Attribute &attribute, const void *key, const void *data, int sizeOfData);
-
-    RC appendRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid);
-
-    RC splitRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid);
-
-    RC splitRootPage(IXFileHandle &ixFileHandle, const Attribute &attribute, unsigned rootPageNum, const void *key, const void *data);
-
-    RC generateNewRootNode(IXFileHandle &ixFileHandle, unsigned leftPageNum, unsigned rightPageNum, void *rootPage, const Attribute &attribute, const void *splitkey);
-
-    RC getNextNode(IXFileHandle &ixFileHandle, unsigned curNode, unsigned &nextNode, const Attribute &attribute, const void *key);
-
-    RC searchInsideLeafNode(IXFileHandle &ixFileHandle, unsigned curNode, int &offset, int &recordId, const Attribute &attribute, const void *key, bool inclusiveKey);
-
-    RC printNode(IXFileHandle &ixFileHandle, int pageFlag, void *page, int numOfRecords, int level, const Attribute &attribute) const;
-
-    RC printNormalBtree(IXFileHandle &ixFileHandle, int curNode, int level, const Attribute &attribute, bool isLastKey) const;
-
+    
 //    RC searchInside
 
 protected:
@@ -126,6 +90,42 @@ protected:
     ~IndexManager() = default;                                                  // Prevent unwanted destruction
     IndexManager(const IndexManager &) = default;                               // Prevent construction by copying
     IndexManager &operator=(const IndexManager &) = default;                    // Prevent assignment
+    
+    RC insertion(IXFileHandle &ixFileHandle, const Attribute &attribute, unsigned curNode, const void *key, const RID &rid, void *newChildKey, void *newChildData, bool &splitFlag);
+    
+    RC getRequiredLength(const Attribute &attribute, const void *key, int sizeOfData);
+    
+    RC insertEntryToNode(int pageFlag, void *page, const Attribute &attribute, const void *key, const void *data, int sizeOfData);
+    
+    RC searchEntry(IXFileHandle &ixFileHandle, int &pageNum, int &offset, int &recordId, const Attribute &attribute, const void *key, bool inclusive);
+    
+    RC getSplitInNode(int pageFlag, void *page, const Attribute &attribute, int &splitOffset, int &splitNumOfRecords, void *splitKey, int sizeOfData);
+    
+    RC compareAndInsertToNode(int pageFlag, void *oldPage, void *newPage, const Attribute &attribute, const void *key, void *splitKey, const void *data, int sizeOfData);
+    
+    RC redistributeNode(IXFileHandle &ixFileHandle, int pageFlag, void *oldPage, void *newPage, int splitOffset, int splitNumOfRecords, const Attribute &attribute);
+    
+    // Above functions are helper function
+    
+    RC insertEntrytoNodeWithSplitting(IXFileHandle &ixFileHandle, int pageFlag, unsigned pageNum, unsigned &newPageNum, void *page, void *splitKey, const Attribute &attribute, const void *key, const void *data, int sizeOfData);
+    
+    RC insertEntrytoNodeWithoutSplitting(IXFileHandle &ixFileHandle, unsigned pageNum, int pageFlag, void *page, const Attribute &attribute, const void *key, const void *data, int sizeOfData);
+    
+    RC appendRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid);
+    
+    RC splitRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid);
+    
+    RC splitRootPage(IXFileHandle &ixFileHandle, const Attribute &attribute, unsigned rootPageNum, const void *key, const void *data);
+    
+    RC generateNewRootNode(IXFileHandle &ixFileHandle, unsigned leftPageNum, unsigned rightPageNum, void *rootPage, const Attribute &attribute, const void *splitkey);
+    
+    RC getNextNode(IXFileHandle &ixFileHandle, unsigned curNode, unsigned &nextNode, const Attribute &attribute, const void *key);
+    
+    RC searchInsideLeafNode(IXFileHandle &ixFileHandle, unsigned curNode, int &offset, int &recordId, const Attribute &attribute, const void *key, bool inclusiveKey);
+    
+    RC printNode(IXFileHandle &ixFileHandle, int pageFlag, void *page, int numOfRecords, int level, const Attribute &attribute) const;
+    
+    RC printNormalBtree(IXFileHandle &ixFileHandle, int curNode, int level, const Attribute &attribute, bool isLastKey) const;
 
 };
 
