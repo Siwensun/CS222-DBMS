@@ -113,9 +113,6 @@ RC IndexManager::insertEntry(IXFileHandle &ixFileHandle, const Attribute &attrib
     return 0;
 }
 
-/*
- * This method is the implementation of the pseduo-code in textbook. It is used to recursively call and insertEntry.
- */
 RC IndexManager::insertion(IXFileHandle &ixFileHandle, const Attribute &attribute, unsigned curNode, const void *key,
         const RID &rid, void *splitKey, void *splitData, bool &splitFlag){
     // read this curNode
@@ -420,11 +417,10 @@ RC IndexManager::scan(IXFileHandle &ixFileHandle,
     }
     
     // If we can't find a <key, rid> that satisfies the comparision
-    // we set the recordId = numOfRecords and offset is the start of freespace.
+    // we set the recordId = numOfRecords and offset is end of valid data which is the start of free space.
     searchEntry(ixFileHandle, pageNum, offset, recordId, attribute, lowKey, lowKeyInclusive);
     
-//    std::cout << "recordId after scan: " << recordId << std::endl;
-    
+    // initialize the scanIterator with pageNum, offset and recordId which shows from where the scan should start.
     RC rc = ix_ScanIterator.initializeScanIterator(ixFileHandle, attribute, lowKey, highKey, lowKeyInclusive,
                                            highKeyInclusive, pageNum, offset, recordId);
     
@@ -490,11 +486,6 @@ int IndexManager::getRequiredLength(const Attribute &attribute, const void *key,
     return requiredLength;
 }
 
-/*
- * insert the <key, data> to page(leaf node or im node specified by pageFlag), data could be rid for leafNode or pageNum for im Node
- * this function doesn't write back to disk, but update buffer page
- * We don't care about split for this function, in other words, the space is definitely enough for <key, data>.
-*/
 RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &attribute, const void *key, const void *data, int sizeOfData){
 
     int offset;
@@ -545,6 +536,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
             for(index = 0; index < numOfRecords; index++){
                 memcpy(&tempData, (char *)page+offset, 4);
                 if(dataInt <= tempData)
+                    // keep the order that key_n <= key_n+1
                     break;
                 offset += (4 + sizeOfData);
             }
@@ -576,6 +568,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
             for(index = 0; index < numOfRecords; index++){
                 memcpy(&tempData, (char *)page+offset, 4);
                 if(dataReal <= tempData)
+                    // keep the order that key_n <= key_n+1
                     break;
                 offset+= (4+sizeOfData);
             }
@@ -615,7 +608,7 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
                 // std::cout << "tempLength is " << tempLength  << "; tempData is" << tempData << std::endl;
 
                 if(strcmp(dataVarChar, tempData) <= 0){
-                    // dataVarChar < tempData
+                    // keep the order that key_n <= key_n+1
                     free(tempData);
                     break;
                 }
@@ -660,10 +653,6 @@ RC IndexManager::insertEntryToNode(int pageFlag, void *page, const Attribute &at
     return 0;
 }
 
-/*
- * get the splitOffset and splitNumOfRecords for page (leaf node or im node specified by pageFlag)
- * retrieve splitKey given splitOffset and attribute. SplitKey is a 4KB buffer, which is used for determine in which page the <key, data> should be.
-*/
 RC IndexManager::getSplitInNode(int pageFlag, void *page, const Attribute &attribute, int &splitOffset, int &splitNumOfRecords, void *splitKey, int sizeOfData){
 
     int startOffset, numOfRecords, freeSpace;
@@ -795,9 +784,6 @@ RC IndexManager::compareAndInsertToNode(int pageFlag, void *oldPage, void *newPa
     return 0;
 }
 
-/*
- * redistribute old page into oldPage and newPage for leaf node and im node.
-*/
 RC IndexManager::redistributeNode(IXFileHandle &ixFileHandle, int pageFlag, void *oldPage, void *newPage, int splitOffset, int splitNumOfRecords, const Attribute &attribute){
 
     if(pageFlag == IM_FLAG || pageFlag == ROOT_FLAG){
@@ -847,9 +833,6 @@ RC IndexManager::redistributeNode(IXFileHandle &ixFileHandle, int pageFlag, void
     return 0;
 }
 
-/*
- * Insert <key, data> to this node with splitting and write back the page and new splitted page, return newPageNum and splitKey for upper level process.
-*/
 RC IndexManager::insertEntrytoNodeWithSplitting(IXFileHandle &ixFileHandle, int pageFlag, unsigned pageNum, unsigned &newPageNum, void *page, void *splitKey, const Attribute &attribute, const void *key, const void *data, int sizeOfData){
 
     RC rc;
@@ -928,10 +911,6 @@ RC IndexManager::insertEntrytoNodeWithoutSplitting(IXFileHandle &ixFileHandle, u
     return 0;
 }
 
-/*
- * First time insert a <key, data>.
- * initialize the root-leaf page and insert it. write back the root-leaf page.
-*/
 RC IndexManager::appendRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid){
 
     void *page = malloc(PAGE_SIZE);
@@ -950,12 +929,6 @@ RC IndexManager::appendRootLeafPage(IXFileHandle &ixFileHandle, const Attribute 
     return 0;
 }
 
-/*
- * If the root-leaf page is full, then we need to
- *      - create two leaf pages
-        - create a root page
-        - rewrite the page 0 as pointer to root page
-*/
 RC IndexManager::splitRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid){
 
     void *leftPage = malloc(PAGE_SIZE);
@@ -984,13 +957,14 @@ RC IndexManager::splitRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &
         // std::cout << "[Error] splitRootLeafPage -> insertEntrytoNodeWithSplitting." << std::endl;
         return -1;
     }
-    // std::cout << "leftPageNum: " << leftPageNum << "; rightageNum: " << rightageNum << std::endl;
+    
     rc = generateNewRootNode(ixFileHandle, leftPageNum, rightageNum, rootPage, attribute, splitKey);
     if(rc != 0){
         // std::cout << "[Error] splitRootLeafPage -> generateNewRootNode." << std::endl;
         return -1;
     }
     
+    // write the rootPage back into disk.
     ixFileHandle.getFileHandle().appendPage(rootPage);
     rootPageNum = ixFileHandle.getFileHandle().getNumberOfPages()-1;
 
@@ -1011,11 +985,7 @@ RC IndexManager::splitRootLeafPage(IXFileHandle &ixFileHandle, const Attribute &
     return 0;
 }
 
-/*
- * If the root page is full, then we need to
- *      - create two im pages
-        - rewrite the root page with two pointers which point to two imPages.
-*/
+
 RC IndexManager::splitRootPage(IXFileHandle &ixFileHandle, const Attribute &attribute, unsigned rootPageNum, const void *key, const void *data){
 
     void *leftPage = malloc(PAGE_SIZE);
@@ -1038,7 +1008,7 @@ RC IndexManager::splitRootPage(IXFileHandle &ixFileHandle, const Attribute &attr
     insertEntrytoNodeWithSplitting(ixFileHandle, IM_FLAG, leftPageNum, newimPageNum, leftPage, splitRootKey, attribute, key, data,
                                    sizeof(unsigned));
 
-    // use a whole new buffer *rootPage
+    // generate a new root page, which stores two pointers pointing to upper left and right pages.
     generateNewRootNode(ixFileHandle, leftPageNum, newimPageNum, rootPage, attribute, splitRootKey);
 
     // re-write the root page
@@ -1051,9 +1021,7 @@ RC IndexManager::splitRootPage(IXFileHandle &ixFileHandle, const Attribute &attr
     return 0;
 }
 
-/*
- * Generate root page.
-*/
+
 RC IndexManager::generateNewRootNode(IXFileHandle &ixFileHandle, unsigned leftPageNum, unsigned rightPageNum, void *rootPage, const Attribute &attribute, const void *splitkey){
 
     imPageDirectory rootImDirectory = {ROOT_FLAG, PAGE_SIZE-IM_DIR_SIZE, 0};
@@ -1109,7 +1077,7 @@ RC IndexManager::getNextNode(IXFileHandle &ixFileHandle, unsigned curNode, unsig
             memcpy(&data, key, sizeof(data));
             for(index = 0; index < directory.numOfRecords; index++){
                 memcpy(&tempData, (char *)imPage+startOffset, sizeof(tempData));
-                if(data < tempData){
+                if(data <= tempData){
                     // get the left pointer if data if less than the tempData
                     memcpy(&nextNode, (char *)imPage+startOffset-sizeof(unsigned), sizeof(unsigned));
                     free(imPage);
@@ -1128,7 +1096,7 @@ RC IndexManager::getNextNode(IXFileHandle &ixFileHandle, unsigned curNode, unsig
             memcpy(&data, key, sizeof(data));
             for(index = 0; index < directory.numOfRecords; index++){
                 memcpy(&tempData, (char *)imPage+startOffset, sizeof(tempData));
-                if(data < tempData){
+                if(data <= tempData){
                     memcpy(&nextNode, (char *)imPage+startOffset-sizeof(unsigned), sizeof(unsigned));
                     free(imPage);
                     return 0;
@@ -1153,7 +1121,7 @@ RC IndexManager::getNextNode(IXFileHandle &ixFileHandle, unsigned curNode, unsig
                 memcpy(tempData, (char *)imPage+startOffset+4, tempLength);
                 tempData[tempLength] = '\0';
 
-                if(strcmp(data, tempData) < 0){
+                if(strcmp(data, tempData) <= 0){
                     memcpy(&nextNode, (char *)imPage+startOffset-4, 4);
                     free(tempData);
                     free(data);
@@ -1342,9 +1310,6 @@ RC IndexManager::printNode(IXFileHandle &ixFileHandle, int pageFlag, void *page,
     return 0;
 }
 
-/*
- * Recursively call this function to print the B+tree.
- */
 RC IndexManager::printNormalBtree(IXFileHandle &ixFileHandle, int curNode, int level, const Attribute &attribute, bool isLastKey) const{
 
     void *page = malloc(PAGE_SIZE);
@@ -1486,11 +1451,12 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
         return -1;
     }
     
-    if(curRecordId >= curLeafPageDir.numOfRecords && curLeafPageDir.numOfRecords != 0){
-//        std::cout << "[Error] -> getNextEntry -> can't get next entry." << std::endl;
-//        std::cout << "[warning] -> getNextEntry -> can't get an entry match the comparison." << std::endl;
+    //
+    if(curRecordId >= curLeafPageDir.numOfRecords && curLeafPageDir.numOfRecords != 0 && curLeafPageDir.nextNode == -1){
+        // std::cout << "[warning] -> getNextEntry -> can't get an entry match the comparison." << std::endl;
         return  IX_EOF;
     } else{
+        // There may be some node without any records, then we check the next node.
         while (curLeafPageDir.numOfRecords == 0) {
             if (curLeafPageDir.nextNode != -1) {
                 curNode = curLeafPageDir.nextNode;
@@ -1524,7 +1490,8 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
             if((highKey == NULL) || (highKeyInclusive && data <= highData) || (data < highData)){
                 memcpy(key, curPage+curOffset, sizeof(int));
                 memcpy(&rid, curPage + curOffset + sizeof(int), sizeof(RID));
-                if(curRecordId == curLeafPageDir.numOfRecords-1){
+                curRecordId ++;
+                if(curRecordId == curLeafPageDir.numOfRecords){
                     curNode = curLeafPageDir.nextNode;
     
                     ixFileHandlePtr->getFileHandle().readPage(curNode, curPage);
@@ -1538,7 +1505,6 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
                     preOffset = curOffset;
                     preRid = rid;
                     curOffset += (sizeof(int) + sizeof(RID));
-                    curRecordId += 1;
 //                    std::cout << "[Scan] get an entry. -> curNode: " << curNode << "; rid.pageNum: " << rid.pageNum << std::endl;
                 }
                 return 0;
@@ -1558,7 +1524,8 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
                 memcpy(&rid, curPage+curOffset+ sizeof(float), sizeof(RID));
                 
                 // if this record is the last entry inside this leaf page, update all the curInfo
-                if(curRecordId == curLeafPageDir.numOfRecords-1){
+                curRecordId ++;
+                if(curRecordId == curLeafPageDir.numOfRecords){
                     curNode = curLeafPageDir.nextNode;
     
                     ixFileHandlePtr->getFileHandle().readPage(curNode, curPage);
@@ -1573,7 +1540,6 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
                     preOffset = curOffset;
                     preRid = rid;
                     curOffset += (sizeof(float) + sizeof(RID));
-                    curRecordId += 1;
                 }
                 return 0;
             } else{
@@ -1602,7 +1568,8 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
             if((highKey == NULL) || (highKeyInclusive && strcmp(data, highData) <= 0) || (strcmp(data, highData) < 0)){
                 memcpy(key, curPage+curOffset, sizeof(int)+length);
                 memcpy(&rid, curPage+curOffset+ sizeof(int)+length, sizeof(RID));
-                if(curRecordId == curLeafPageDir.numOfRecords-1){
+                curRecordId ++;
+                if(curRecordId == curLeafPageDir.numOfRecords){
                     curNode = curLeafPageDir.nextNode;
     
                     ixFileHandlePtr->getFileHandle().readPage(curNode, curPage);
@@ -1617,7 +1584,6 @@ RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
                     preOffset = curOffset;
                     preRid = rid;
                     curOffset += (sizeof(int) + length + sizeof(RID));
-                    curRecordId += 1;
                 }
                 free(data);
                 if(highKey != NULL) {
