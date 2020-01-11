@@ -1,3 +1,7 @@
+This repo is the course project for UCI CS222: Database Management System.
+
+![](attachments/DBMS.PNG)
+
 By default you should not change those functions of pre-defined in the given .h files.
 If you think some changes are really necessary, please contact us first.
 
