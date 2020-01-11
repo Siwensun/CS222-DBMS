@@ -1503,9 +1503,9 @@ RC RecordBasedFileManager::readAttributesFromRecord(const std::vector<Attribute>
 
     // initialize null indicator for attributes
     int nullFieldsIndicatorForAttributesSize = ceil((double(attributesLength)/CHAR_BIT));
-    auto *nullsIndicatorForAttributes = (unsigned char *) malloc(nullFieldsIndicatorForAttributesSize);
+    auto *nullIndicatorForAttributes = (unsigned char *) malloc(nullFieldsIndicatorForAttributesSize);
     // must set the memory to 0
-    memset(nullsIndicatorForAttributes, 0, nullFieldsIndicatorForAttributesSize);
+    memset(nullIndicatorForAttributes, 0, nullFieldsIndicatorForAttributesSize);
     offsetData += nullFieldsIndicatorForAttributesSize;
 
     // 1. First byte is the flag
@@ -1545,7 +1545,7 @@ RC RecordBasedFileManager::readAttributesFromRecord(const std::vector<Attribute>
                  * indexForAttributes / 8 -> byteindex
                  * 7 - indexForAttributes % 8 -> num of shifts for that bit
                  */
-                nullsIndicatorForAttributes[indexForAttributes/CHAR_BIT] |= ((unsigned char) 1 << (unsigned) (7 - indexForAttributes%CHAR_BIT));
+                nullIndicatorForAttributes[indexForAttributes/CHAR_BIT] |= ((unsigned char) 1 << (unsigned) (7 - indexForAttributes%CHAR_BIT));
                 indexForAttributes++;
                 continue;
             }
@@ -1593,9 +1593,9 @@ RC RecordBasedFileManager::readAttributesFromRecord(const std::vector<Attribute>
         }
     }
     // write the nullsIndicatorForAttributes back to data
-    memcpy(data, nullsIndicatorForAttributes, nullFieldsIndicatorForAttributesSize);
+    memcpy(data, nullIndicatorForAttributes, nullFieldsIndicatorForAttributesSize);
     free(nullsIndicator);
-    free(nullsIndicatorForAttributes);
+    free(nullIndicatorForAttributes);
     return 0;
 }
 

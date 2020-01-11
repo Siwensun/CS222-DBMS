@@ -32,10 +32,30 @@ struct Condition {
     Value rhsValue;             // right-hand side value if bRhsIsAttr = FALSE
 };
 
-
+/*
+ * Similar to rbfm.readAttributes(...), but differ in:
+ * readAttributes(...) get desired attributes from record format, but extractFromReturnedData(...) get desired attributes from original format.
+ * input data is generated from getNextTuple, which is already using the original format, that is for varChar, varCharLen is followed by characters.
+ */
 RC extractFromReturnedData(const std::vector<Attribute> &attrs, const std::vector<std::string> &selAttrNames, const void *data, void *selData);
+
+/*
+ * Compare left hand data and right hand data based on the condition operation.
+ * LeftOffset and rightOffset are the offsets where the target value starts.
+ */
 bool compLeftRightVal(AttrType attrType, Condition condition, const void *leftData, const void *rightData, int leftOffset, int rightOffset);
+
+/*
+ * concatenate lhsTupleData and rhsTupleData.
+ * Originally, lhsTupleData and rhsTupleData both have nullIndicator ahead of the attributes.
+ * The output data should combine these two, and have one single nullIndicator at the head following the original format.
+ */
 RC concatenateData(std::vector<Attribute> allAttributes, std::vector<Attribute> lhsAttributes, std::vector<Attribute> rhsAttributes, void *lhsTupleData, void *rhsTupleData, void *data);
+
+/*
+ * This function could get the valid length of data, including nullIndicator and attributes.
+ * Then the length could be used in join operation.
+ */
 int getLengthOfData(const std::vector<Attribute> &attrs, const void *data);
 
 class Iterator {
@@ -279,6 +299,9 @@ public:
         free(joinKey);
     }
 
+    /*
+     * For each tuple from lhsTable, scan the entire lhsTable to check whether there is a join.
+     */
     RC getNextTuple(void *data) override;
 
     // For attribute in std::vector<Attribute>, name it as rel.attr

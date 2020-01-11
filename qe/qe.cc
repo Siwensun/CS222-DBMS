@@ -54,7 +54,6 @@ bool Filter::isSatisfied(void *data) {
     selAttrs.push_back(condition.lhsAttr);
     int nullIndicatorSize = ceil(double(selAttrs.size())/CHAR_BIT);
     extractFromReturnedData(lhsallAttributes, selAttrs, data, selData);
-    
     RC rc = compLeftRightVal(this->attrType, this->condition, selData, condition.rhsValue.data, nullIndicatorSize, 0);
     
     free(selData);
@@ -954,9 +953,9 @@ RC extractFromReturnedData(const std::vector<Attribute> &attrs, const std::vecto
     int selAttrsLength = selAttrNames.size();
     
     int nullIndicatorForSelAttrsSize = ceil((double(selAttrsLength) / CHAR_BIT));
-    auto *nullsIndicatorForSelAttrs = (unsigned char *) malloc(nullIndicatorForSelAttrsSize);
+    auto *nullIndicatorForSelAttrs = (unsigned char *) malloc(nullIndicatorForSelAttrsSize);
     // must set the memory to 0
-    memset(nullsIndicatorForSelAttrs, 0, nullIndicatorForSelAttrsSize);
+    memset(nullIndicatorForSelAttrs, 0, nullIndicatorForSelAttrsSize);
     offsetSelData += nullIndicatorForSelAttrsSize;
     
     // 3. NullIndicator
@@ -987,7 +986,7 @@ RC extractFromReturnedData(const std::vector<Attribute> &attrs, const std::vecto
                  * indexForAttributes / 8 -> byteindex
                  * 7 - indexForAttributes % 8 -> num of shifts for that bit
                  */
-                nullsIndicatorForSelAttrs[indexForAttributes/CHAR_BIT] |= ((unsigned char) 1 << (unsigned) (7 - indexForAttributes%CHAR_BIT));
+                nullIndicatorForSelAttrs[indexForAttributes/CHAR_BIT] |= ((unsigned char) 1 << (unsigned) (7 - indexForAttributes%CHAR_BIT));
                 indexForAttributes++;
                 continue;
             }
@@ -1033,9 +1032,9 @@ RC extractFromReturnedData(const std::vector<Attribute> &attrs, const std::vecto
         }
     }
     // write the nullsIndicatorForAttributes back to data
-    memcpy(selData, nullsIndicatorForSelAttrs, nullIndicatorForSelAttrsSize);
+    memcpy(selData, nullIndicatorForSelAttrs, nullIndicatorForSelAttrsSize);
     free(nullsIndicator);
-    free(nullsIndicatorForSelAttrs);
+    free(nullIndicatorForSelAttrs);
     return 0;
 }
 
