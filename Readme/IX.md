@@ -8,7 +8,7 @@ modified: '2020-01-08T23:17:22.387Z'
 
 # IX
 
-![](@attachment/B+tree.PNG)
+![](attachments/B+tree.PNG)
 
 B+ tree based Index File System:
 - Intermediate Node:
