@@ -754,7 +754,6 @@ RC RelationManager::insertRecordToIndexes(FileHandle &fileHandle, RecordBasedFil
     return 0;
 }
 
-// prepare the table as record in Tables as data format
 RC RelationManager::prepareTablesRecord(int tableId, std::string tableName, std::string fileName, void *data){
     
     bool nullBit;
@@ -919,6 +918,7 @@ RC RelationManager::getTableIdForCustomTable(const std::string &tableName, int &
     memcpy(table_name_value, &length, 4);
     memcpy((char *)table_name_value+4, tableName.c_str(), length);
     
+    // Only need to retrieve the tableId attribute.
     std::vector<std::string> attrNames;
     attrNames.emplace_back("table-id");
     
@@ -932,7 +932,7 @@ RC RelationManager::getTableIdForCustomTable(const std::string &tableName, int &
         return -1;
     }
     
-    //1.4 get the record whose table-name is tableName
+    //1.4 get the record whose table-name is tableName, since there is no duplicate table names, so that the first result of getNextRecord is the final result.
     rc = rbfmScanIterator.getNextRecord(rid, data);
     if(rc != 0){
         // std::cout << "[Error] getTableIdForCustomTable -> getNextRecord for Tabels" << std::endl;
@@ -943,6 +943,7 @@ RC RelationManager::getTableIdForCustomTable(const std::string &tableName, int &
     }
     rbfmScanIterator.close();
     
+    // 1.5 retrieved data is in the original format, the first part is nullIndicator, then use memcpy to get tableId.
     int nullIndicatorSize = ceil(double(attrNames.size())/CHAR_BIT);
     memcpy(&tableId, (char *)data+nullIndicatorSize, 4);       // +1 -> 1 byte nullindicator
     

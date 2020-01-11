@@ -116,6 +116,7 @@ RC RBFM_ScanIterator::getNextRecord(RID &rid, void *data) {
     return RBFM_EOF;
 };
 
+
 RC RBFM_ScanIterator::getNextRID(RID &rid){
 
     RecordBasedFileManager &rbfm = RecordBasedFileManager::instance();
@@ -156,20 +157,22 @@ RC RBFM_ScanIterator::getNextRID(RID &rid){
                     return -2;
                 }
                 else if(rc == -2){
-                    // if the record is deleted, continue
+                    // if the record is deleted, continue, continue, read the next record.
                     continue;
 //                std::cout << "[Warning] : getNextRID -> scan deleted record." << std::endl;
                 }
                 else if(rc == 0){
                     int nullSize = ceil((double)recordDescriptor.size()/CHAR_BIT);
-//                std::cout << "doOp -> nullSize " << nullSize <<  std::endl;
                     if(doOp(nullSize, attribute)>0){
-//                    std::cout << "get one result" << std::endl;
                         rid.pageNum = curRID.pageNum;
                         rid.slotNum = curRID.slotNum;
 
                         free(attribute);
                         return 0;
+                    }
+                    else{
+                        // if the result doesn't meet the requirement, continue, check the next record.
+                        continue;
                     }
                 }
             }
@@ -178,6 +181,7 @@ RC RBFM_ScanIterator::getNextRID(RID &rid){
 }
 
 RC RBFM_ScanIterator::updateCurRIDAndCurNumOfSlotsInPage(){
+    // In the constructor, initial curRID.slotNum is set to -1. So each time we should first increment curNode.slotNum
     curRID.slotNum++;
     if(curRID.slotNum >= curNumOfSlotsInPage){
         curRID.slotNum = 0;
@@ -944,9 +948,13 @@ RC RecordBasedFileManager::deleteRecord(FileHandle &fileHandle, const std::vecto
 
 }
 
+
 RC RecordBasedFileManager::shiftAllRecords(char16_t distance, const RID &rid, void *page) {
+    
     // we need to order all the records and shift all the records whose offset is bigger than this record
+    
     char* _PageDir = (char*) page + PAGE_SIZE - sizeof(PageDirectory);
+    // get the slot that we want to delete.
     char* _SlotDir = (char*) page + PAGE_SIZE - sizeof(PageDirectory) - (rid.slotNum + 1) * sizeof(SlotDirectory);
     auto* thisPage = (PageDirectory*)_PageDir;
     auto* thisSlot = (SlotDirectory*)_SlotDir;
@@ -1324,11 +1332,7 @@ RC RecordBasedFileManager::checkRecordFlag(FileHandle &fileHandle, const RID &ri
     return -1;
 }
 
-/*
- * return value: 0: get the desired attribute
- *               1: get null
- *               2: attribute name doesn't exist in record.
- */
+
 RC RecordBasedFileManager::readAttributeFromRecord(const std::vector<Attribute> &recordDescriptor, const std::string &attributeName, void *data, void *record){
 
     int fieldLength = recordDescriptor.size();

@@ -109,11 +109,6 @@ RC PagedFileManager::closeFile(FileHandle &fileHandle) {
     }
 }
 
-FileHandle &FileHandle::instance() {
-    static FileHandle _file_handle = FileHandle();
-    return _file_handle;
-}
-
 FileHandle::FileHandle() {
     readPageCounter = 0;
     writePageCounter = 0;

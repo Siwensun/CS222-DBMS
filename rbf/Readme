@@ -1,0 +1,15 @@
+In this folder, there are two systems: paged file system and record-based file system.
+The PF component provides facilities for higher-level client components to perform file I/O in terms of pages. In the PF component, methods are provided to create, destroy, open, and close paged files, to read and write a specific page of a given file, and to add pages to a given file. The record manager is going to be built on top of the basic paged file system.
+
+==== Paged File System ====
+The PagedFileManager class handles the creation, deletion, opening, and closing of paged files. Your program should create exactly one instance of this class, and all requests for PF component file management should be directed to that instance.
+This class use to handle basic file operations.
+class PagedFileManager{};
+
+
+The FileHandle class provides access to the pages of an open file. To access the pages of a file, a client first creates an instance of this class and passes it to the PagedFileManager::openFile method described above.
+This class is more frequently used class than the PagesFileManager(), it includes read, write, append, getNumOfPages, collectCounterValues methods to directly handle page operation.
+class FileHandle {};
+
+
+==== Record-based File System ====

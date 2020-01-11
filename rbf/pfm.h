@@ -37,8 +37,6 @@ private:
 
 class FileHandle {
 public:
-    static FileHandle &instance();                                // Access to the _pf_manager instance
-
     // variables to keep the counter for each operation
     unsigned readPageCounter;
     unsigned writePageCounter;
