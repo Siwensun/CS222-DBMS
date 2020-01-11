@@ -58,7 +58,7 @@ When calling the getNextRecord(), first update the curNode which stores curSlot 
 
 **Record format**:
 |flag(1)|num of fields(2)|nullIndicator: according to the num of fields|attributes(int or float is 4-bytes, for varChar, varFieldLengthLen and varFieldOffsetLen is 2-bytes, and put the actual varChar at the end.)|
-![](@attachment/RecordFormat.PNG)
+![](attachments/RecordFormat.PNG)
 
 **Page format**:
 SlotDirectory and PageDirectory at the end of each page: 
